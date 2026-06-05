@@ -168,4 +168,92 @@ router.delete('/announcements/:id', async (req, res) => {
   }
 })
 
+// ── Question Papers (admin) ─────────────────────────────────────────────────
+
+// List papers with stats
+router.get('/papers', async (req, res) => {
+  try {
+    const papers = await prisma.questionPaper.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { questions: true } } },
+    })
+    const data = await Promise.all(papers.map(async (p) => {
+      const graded = await prisma.paperQuestion.count({
+        where: { paperId: p.id, correctOption: { not: null } },
+      })
+      return { ...p, questionCount: p._count.questions, gradedCount: graded, _count: undefined }
+    }))
+    res.json(data)
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch papers' })
+  }
+})
+
+// Get one paper with all questions INCLUDING the answer key (admin only)
+router.get('/papers/:slug', async (req, res) => {
+  try {
+    const paper = await prisma.questionPaper.findUnique({
+      where: { slug: req.params.slug },
+      include: { questions: { orderBy: { number: 'asc' } } },
+    })
+    if (!paper) return res.status(404).json({ error: 'Paper not found' })
+    res.json(paper)
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch paper' })
+  }
+})
+
+// Update paper metadata (title, year, isActive, durationMin)
+router.patch('/papers/:id', async (req, res) => {
+  try {
+    const { title, year, isActive, durationMin } = req.body
+    const data = {}
+    if (title !== undefined) data.title = title
+    if (year !== undefined) data.year = year
+    if (isActive !== undefined) data.isActive = isActive
+    if (durationMin !== undefined) data.durationMin = parseInt(durationMin, 10)
+    const updated = await prisma.questionPaper.update({ where: { id: req.params.id }, data })
+    res.json(updated)
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update paper' })
+  }
+})
+
+// Set the correct option (answer key) for a single question
+router.patch('/papers/questions/:questionId', async (req, res) => {
+  try {
+    const { correctOption, subject } = req.body
+    const data = {}
+    if (correctOption !== undefined) data.correctOption = correctOption // 0-3 or null
+    if (subject !== undefined) data.subject = subject
+    const updated = await prisma.paperQuestion.update({
+      where: { id: req.params.questionId },
+      data,
+    })
+    res.json(updated)
+  } catch (err) {
+    if (err.code === 'P2025') return res.status(404).json({ error: 'Question not found' })
+    res.status(500).json({ error: 'Failed to update question' })
+  }
+})
+
+// Bulk-set answer key: body { answers: { "<number>": <optIdx> } }
+router.patch('/papers/:id/answers', async (req, res) => {
+  try {
+    const { answers = {} } = req.body
+    const entries = Object.entries(answers)
+    await prisma.$transaction(
+      entries.map(([number, opt]) =>
+        prisma.paperQuestion.updateMany({
+          where: { paperId: req.params.id, number: parseInt(number, 10) },
+          data: { correctOption: opt === null ? null : parseInt(opt, 10) },
+        })
+      )
+    )
+    res.json({ updated: entries.length })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save answer key' })
+  }
+})
+
 export default router

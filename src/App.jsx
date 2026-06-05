@@ -7,6 +7,8 @@ import Dashboard from './pages/Dashboard'
 import RankPredictor from './pages/RankPredictor'
 import MockTests from './pages/MockTests'
 import MockTestInterface from './pages/MockTestInterface'
+import QuestionPapers from './pages/QuestionPapers'
+import PaperTest from './pages/PaperTest'
 import CollegePredictor from './pages/CollegePredictor'
 import ExpertCounselling from './pages/ExpertCounselling'
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -49,6 +51,8 @@ const AppRoutes = () => {
         <Route path="rank-predictor" element={<RankPredictor />} />
         <Route path="mock-tests" element={<MockTests />} />
         <Route path="mock-test/:id" element={<MockTestInterface />} />
+        <Route path="question-papers" element={<QuestionPapers />} />
+        <Route path="paper-test/:slug" element={<PaperTest />} />
         <Route path="college-predictor" element={<CollegePredictor />} />
         <Route path="admission-counselling" element={<AdmissionCounselling />} />
         <Route path="expert-counselling" element={<ExpertCounselling />} />

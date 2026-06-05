@@ -8,6 +8,7 @@ const navItems = [
   { to: '/dashboard',                      icon: 'dashboard',       label: 'Home'                  },
   { to: '/dashboard/rank-predictor',       icon: 'insights',        label: 'Rank Predictor'        },
   { to: '/dashboard/mock-tests',           icon: 'quiz',            label: 'Mock Test'             },
+  { to: '/dashboard/question-papers',      icon: 'description',     label: 'Question Papers'       },
   { to: '/dashboard/college-predictor',    icon: 'account_balance', label: 'College Predictor'     },
   { to: '/dashboard/admission-counselling',icon: 'how_to_reg',      label: 'Admission Counselling' },
   { to: '/dashboard/expert-counselling',   icon: 'support_agent',   label: 'Expert Counselling'    },

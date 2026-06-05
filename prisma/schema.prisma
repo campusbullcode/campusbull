@@ -99,6 +99,30 @@ model TestAttempt {
   test       MockTest @relation(fields: [testId], references: [id], onDelete: Cascade)
 }
 
+model QuestionPaper {
+  id          String          @id @default(uuid())
+  slug        String          @unique          // e.g. "neet-2026"
+  title       String                           // e.g. "NEET (UG) 2026"
+  year        String?
+  pdfUrl      String?                          // e.g. "/papers/neet-2026.pdf"
+  durationMin Int             @default(180)
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  questions   PaperQuestion[]
+}
+
+model PaperQuestion {
+  id            String        @id @default(uuid())
+  paperId       String
+  number        Int
+  subject       String?
+  imageUrl      String                         // e.g. "/questions/neet-2026/q001.png"
+  correctOption Int?                           // 0..3 = A..D; null = ungraded (practice)
+  paper         QuestionPaper @relation(fields: [paperId], references: [id], onDelete: Cascade)
+
+  @@unique([paperId, number])
+}
+
 model College {
   id         String   @id @default(uuid())
   name       String
