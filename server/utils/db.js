@@ -4,15 +4,15 @@ import pg from 'pg'
 const { Pool } = pg
 import { PrismaPg } from '@prisma/adapter-pg'
 
-// Handle TLS/SSL constraints bypass natively
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+const connectionString = process.env.DATABASE_URL
+if (!connectionString) {
+  throw new Error('DATABASE_URL is not set. Add it to your .env (local) or Render env vars (production).')
+}
 
-const pool = new Pool({ 
-  connectionString: 'postgresql://neondb_owner:npg_uQLIKlN1DhO2@100.51.95.243/neondb?sslmode=require&options=endpoint%3Dep-steep-butterfly-anxifkii-pooler&pgbouncer=true',
-  ssl: { 
-    rejectUnauthorized: false,
-    servername: 'ep-steep-butterfly-anxifkii-pooler.c-6.us-east-1.aws.neon.tech'
-  }
+// Neon serves a publicly-trusted TLS cert, so verify it (sslmode=require in the URL).
+const pool = new Pool({
+  connectionString,
+  ssl: { rejectUnauthorized: true }
 })
 
 const adapter = new PrismaPg(pool)
