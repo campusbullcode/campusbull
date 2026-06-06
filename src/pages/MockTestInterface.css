@@ -237,3 +237,41 @@
 
 .opt-correct { background: rgba(74,222,128,0.1); color: #4ade80; }
 .opt-wrong { background: rgba(211,47,47,0.1); color: var(--primary); }
+
+/* === Mobile test interface ============================ */
+@media (max-width: 1024px) {
+  /* clear the floating hamburger button */
+  .test-topbar { padding-left: 3.75rem; }
+}
+
+@media (max-width: 768px) {
+  /* Let the whole test scroll naturally instead of fixed panes */
+  .test-interface { height: auto; min-height: 100vh; overflow: visible; }
+  .test-topbar {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem 0.75rem 3.6rem;
+  }
+  .test-name { font-size: 0.8rem; max-width: 55vw; }
+  .timer-wrap { max-width: none; order: 3; width: 100%; }
+
+  .test-body { flex-direction: column; overflow: visible; }
+
+  /* Question + options first */
+  .test-main { order: 1; padding: 1rem; overflow: visible; }
+  .question-card { padding: 1rem; }
+  .pt-q-image { max-width: 100%; }
+
+  /* Question-number tiles below */
+  .test-sidebar {
+    order: 2;
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+    border-top: 1px solid rgba(91,64,61,0.15);
+    overflow: visible;
+  }
+  .q-grid { grid-template-columns: repeat(8, 1fr); }
+  .q-btn { font-size: 0.7rem; }
+  .q-legend { flex-direction: row; flex-wrap: wrap; gap: 0.75rem; }
+}

@@ -234,3 +234,10 @@
   .college-grid { grid-template-columns: 1fr; }
   .colleges-table th, .colleges-table td { padding: 0.75rem; font-size: 0.8rem; }
 }
+
+/* === Mobile: stack the search form cleanly (no huge gaps) === */
+@media (max-width: 768px) {
+  .college-search-inner { flex-direction: column; align-items: stretch; gap: 0.9rem; }
+  .college-search-inner > * { flex: 0 0 auto !important; width: 100% !important; }
+  .college-search-inner .field-group { min-width: 0 !important; }
+}
