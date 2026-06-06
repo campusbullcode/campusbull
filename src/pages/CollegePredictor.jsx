@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../utils/api'
+import campusBullLogo from '../campus-bull-logo.png'
 import './CollegePredictor.css'
 
 import { STATES_LIST } from '../constants/states'
@@ -249,23 +250,57 @@ export default function CollegePredictor() {
     }
   }
 
-  const exportCSV = () => {
+  // Load an image URL into a data URL so jsPDF can embed it.
+  const toDataURL = (url) =>
+    fetch(url).then(r => r.blob()).then(b => new Promise((res, rej) => {
+      const fr = new FileReader()
+      fr.onload = () => res(fr.result)
+      fr.onerror = rej
+      fr.readAsDataURL(b)
+    }))
+
+  const exportPDF = async () => {
     if (!apiColleges.length) return
-    const headers = ['College Name', 'State', 'Institution Type', 'Seat Category', 'Seat Quota', 'Course Fee', 'Year', 'R1', 'R2', 'R3', 'R4', 'R5']
-    const rows = apiColleges.map(c => [
-      `"${c.name}"`, `"${c.state}"`, `"${c.type}"`,
-      `"${c.category}"`, `"${c.quota || '-'}"`, `"${c.course_fee || 'N/A'}"`, `"${c.year}"`, 
-      `"${c.rounds?.r1 || '-'}"`, `"${c.rounds?.r2 || '-'}"`, `"${c.rounds?.r3 || '-'}"`, 
-      `"${c.rounds?.r4 || '-'}"`, `"${c.rounds?.r5 || '-'}"`
+    // Lazy-load the heavy PDF libs only on download (keeps initial bundle small).
+    const { jsPDF } = await import('jspdf')
+    const autoTable = (await import('jspdf-autotable')).default
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
+    const pageW = doc.internal.pageSize.getWidth()
+
+    // ── Branded header ──
+    try {
+      const logo = await toDataURL(campusBullLogo)
+      doc.addImage(logo, 'PNG', 40, 22, 54, 36) // logo is 1.5:1
+    } catch { /* logo optional */ }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(211, 47, 47)
+    doc.text('Campus Bull', 106, 40)
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(60, 60, 60)
+    doc.text('College Predictions', 106, 56)
+    doc.setFontSize(9); doc.setTextColor(120, 120, 120)
+    doc.text(`Rank: ${rank || '-'}    Generated: ${new Date().toLocaleDateString()}`, pageW - 40, 40, { align: 'right' })
+    doc.setDrawColor(211, 47, 47); doc.setLineWidth(1); doc.line(40, 66, pageW - 40, 66)
+
+    const head = [['College Name', 'State', 'Type', 'Category', 'Quota', 'Fee', 'Year', 'R1', 'R2', 'R3', 'R4', 'R5']]
+    const body = apiColleges.map(c => [
+      c.name, c.state, c.type, c.category, c.quota || '-', c.course_fee || 'N/A', c.year,
+      c.rounds?.r1 || '-', c.rounds?.r2 || '-', c.rounds?.r3 || '-', c.rounds?.r4 || '-', c.rounds?.r5 || '-',
     ])
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `college_predictions_rank${rank}.csv`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+
+    autoTable(doc, {
+      head, body, startY: 76,
+      styles: { fontSize: 7, cellPadding: 3, overflow: 'linebreak' },
+      headStyles: { fillColor: [211, 47, 47], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [248, 248, 248] },
+      columnStyles: { 0: { cellWidth: 150 } },
+      margin: { left: 40, right: 40 },
+      didDrawPage: (data) => {
+        const str = `Campus Bull · campusbull.com   —   Page ${doc.internal.getNumberOfPages()}`
+        doc.setFontSize(8); doc.setTextColor(150)
+        doc.text(str, pageW / 2, doc.internal.pageSize.getHeight() - 16, { align: 'center' })
+      },
+    })
+
+    doc.save(`campusbull_college_predictions_rank${rank || ''}.pdf`)
   }
 
   const handleSort = (key) => {
@@ -491,9 +526,9 @@ export default function CollegePredictor() {
                 : 'Enter your rank and click Find Colleges'}
           </p>
           {searched && apiColleges.length > 0 && (
-            <button className="btn-secondary" onClick={exportCSV} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <span className="material-icons" style={{ fontSize: '1.1rem' }}>download</span>
-              Download CSV
+            <button className="btn-secondary" onClick={exportPDF} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <span className="material-icons" style={{ fontSize: '1.1rem' }}>picture_as_pdf</span>
+              Download PDF
             </button>
           )}
         </div>

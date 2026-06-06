@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import campusBullLogo from '../campus-bull-logo.jpeg'
+import campusBullLogo from '../campus-bull-logo.png'
 import './Layout.css'
 
 const navItems = [

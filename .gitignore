@@ -37,3 +37,6 @@ qps/
 tools/__pycache__/
 tools/__proto*/
 tools/__*.py
+
+# Source logo (copied into src/ and public/)
+logo (1).png

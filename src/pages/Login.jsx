@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import logoImage from '../campus-bull-logo.jpeg'
+import logoImage from '../campus-bull-logo.png'
 import './Login.css'
 
 export default function Login() {
