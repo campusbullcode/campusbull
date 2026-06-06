@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { apiFetch } from '../utils/api'
 import './QuestionPapers.css'
 
 export default function QuestionPapers() {
@@ -10,7 +9,9 @@ export default function QuestionPapers() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    apiFetch('/papers')
+    // Static papers index (served from /public, no backend/DB).
+    fetch('/papers/index.json')
+      .then(r => { if (!r.ok) throw new Error('Could not load papers'); return r.json() })
       .then(setPapers)
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))

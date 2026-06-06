@@ -8,7 +8,6 @@ import AdminUsers from './AdminUsers';
 import AdminAdmission from './AdminAdmission';
 import AdminGuide from './AdminGuide';
 import AdminAnnouncements from './AdminAnnouncements';
-import AdminPapers from './AdminPapers';
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
@@ -19,7 +18,6 @@ export default function AdminDashboard() {
     { id: 'dashboard', icon: 'dashboard', label: 'Dashboard', component: <AdminOverview onNavigate={setActiveTab} /> },
     { id: 'users', icon: 'group', label: 'User Management', component: <AdminUsers /> },
     { id: 'qa', icon: 'quiz', label: 'Q/A Management', component: <AdminQA /> },
-    { id: 'papers', icon: 'description', label: 'Question Papers', component: <AdminPapers /> },
     // { id: 'announcements', icon: 'campaign', label: 'Announcements', component: <AdminAnnouncements /> },
     { id: 'admission', icon: 'school', label: 'Admission Counselling', component: <AdminAdmission /> },
     { id: 'guide', icon: 'support_agent', label: 'Guide Counselling', component: <AdminGuide /> },

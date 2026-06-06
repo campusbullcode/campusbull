@@ -19,10 +19,10 @@ export default function MockTests() {
   const [userStats, setUserStats] = useState(null)
 
   useEffect(() => {
-    // Load demo/curated tests AND real question papers, merged into one grid.
+    // Load demo/curated tests AND real question papers (static index), merged.
     Promise.all([
       apiFetch('/tests').catch(() => []),
-      apiFetch('/papers').catch(() => []),
+      fetch('/papers/index.json').then(r => r.ok ? r.json() : []).catch(() => []),
     ])
       .then(([demoTests, papers]) => {
         const paperTests = papers

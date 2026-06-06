@@ -31,3 +31,9 @@ import_log.txt
 /src/generated/prisma
 # Raw source PDFs (served copies live in public/papers/)
 questionpapers/
+
+# Raw source question papers (extracted assets live in public/)
+qps/
+tools/__pycache__/
+tools/__proto*/
+tools/__*.py

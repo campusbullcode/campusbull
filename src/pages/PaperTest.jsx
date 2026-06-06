@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { apiFetch } from '../utils/api'
 import './MockTestInterface.css'
 import './PaperTest.css'
 
-const LETTERS = ['A', 'B', 'C', 'D']
+const STYLES = { ABCD: ['A', 'B', 'C', 'D'], '1234': ['1', '2', '3', '4'] }
 
 export default function PaperTest() {
   const { slug } = useParams()
@@ -21,50 +20,54 @@ export default function PaperTest() {
   const [marked, setMarked] = useState({})
   const [timeLeft, setTimeLeft] = useState(0)
   const [result, setResult] = useState(null)
-  const [submitting, setSubmitting] = useState(false)
-  const startedRef = useRef(false)
+  const doneRef = useRef(false)
 
   useEffect(() => {
-    apiFetch(`/papers/${slug}`)
-      .then(p => {
-        setPaper(p)
-        setQuestions(p.questions || [])
-        setTimeLeft((p.durationMin || 180) * 60)
+    // Static manifest (images + answer key baked in), served from /public.
+    fetch(`/questions/${slug}/manifest.json`)
+      .then(r => { if (!r.ok) throw new Error('Paper not found'); return r.json() })
+      .then(m => {
+        setPaper(m)
+        setQuestions(m.questions || [])
+        setTimeLeft((m.durationMin || 180) * 60)
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
   }, [slug])
 
-  const handleSubmit = useCallback(async () => {
-    if (startedRef.current === 'done') return
-    startedRef.current = 'done'
-    setSubmitting(true)
-    try {
-      const res = await apiFetch(`/papers/${slug}/submit`, {
-        method: 'POST',
-        body: JSON.stringify({ answers }),
-      })
-      setResult(res)
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setSubmitting(false)
-    }
-  }, [slug, answers])
+  const LETTERS = STYLES[paper?.optionStyle] || STYLES.ABCD
 
-  // timer
+  const grade = useCallback(() => {
+    if (doneRef.current) return
+    doneRef.current = true
+    let correct = 0, wrong = 0, attempted = 0, gradedCount = 0
+    const results = questions.map(q => {
+      const your = answers[q.number]
+      const isGraded = q.correctOption !== null && q.correctOption !== undefined
+      if (isGraded) gradedCount++
+      if (your !== undefined && your !== null) {
+        attempted++
+        if (isGraded) { if (your === q.correctOption) correct++; else wrong++ }
+      }
+      return { number: q.number, subject: q.subject, image: q.image, your: your ?? null,
+               correct: isGraded ? q.correctOption : null, isGraded }
+    })
+    setResult({
+      title: paper.title, totalQuestions: questions.length,
+      gradedCount, attempted, correct, wrong,
+      score: correct * 4 - wrong, maxScore: gradedCount * 4, results,
+    })
+  }, [questions, answers, paper])
+
   useEffect(() => {
     if (!started || result) return
-    if (timeLeft <= 0) { handleSubmit(); return }
+    if (timeLeft <= 0) { grade(); return }
     const t = setInterval(() => setTimeLeft(s => Math.max(0, s - 1)), 1000)
     return () => clearInterval(t)
-  }, [started, result, timeLeft, handleSubmit])
+  }, [started, result, timeLeft, grade])
 
   const fmt = (s) => `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
-
-  const confirmSubmit = () => {
-    if (window.confirm('Submit the test? You cannot change answers afterwards.')) handleSubmit()
-  }
+  const confirmSubmit = () => { if (window.confirm('Submit the test? You cannot change answers afterwards.')) grade() }
 
   if (loading) return <div className="page-container"><div className="qp-empty">Loading test…</div></div>
   if (error && !result) return <div className="page-container"><div className="qp-empty">Error: {error}</div></div>
@@ -82,11 +85,13 @@ export default function PaperTest() {
             <div className="test-begin-stat"><span className="material-icons">stars</span> +4 / −1 Marking</div>
           </div>
           <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.85rem', textAlign: 'center', maxWidth: 460, lineHeight: 1.6 }}>
-            Each question is shown as an image (with all options). Pick A, B, C or D. Scoring applies to questions
-            that have an official answer key set; the rest are practice.
+            Each question is shown as an image with all options. Pick {LETTERS.join(', ')}.
+            {paper.gradedCount > 0
+              ? ' Your score is calculated against the official answer key.'
+              : ' This paper runs in practice mode (no answer key set), so you can review your choices but no score is shown.'}
           </p>
           <button className="btn-primary" style={{ fontSize: '1rem', padding: '0.875rem 2.5rem' }}
-            onClick={() => { setStarted(true); startedRef.current = true }}>
+            onClick={() => setStarted(true)}>
             <span className="material-icons">play_arrow</span> Begin Test
           </button>
           <button className="btn-ghost" onClick={() => navigate('/dashboard/question-papers')}>← Back to Papers</button>
@@ -97,7 +102,6 @@ export default function PaperTest() {
 
   // ── Result screen ──
   if (result) {
-    const byNumber = Object.fromEntries(questions.map(q => [q.number, q]))
     return (
       <div className="page-container">
         <div className="result-screen animate-in">
@@ -116,15 +120,14 @@ export default function PaperTest() {
               </>
             ) : (
               <p style={{ color: 'var(--on-surface-variant)', textAlign: 'center', maxWidth: 460 }}>
-                You attempted <b>{result.attempted}</b> of {result.totalQuestions} questions. No official answer key is set
-                for this paper yet, so it ran in practice mode (no score).
+                You attempted <b>{result.attempted}</b> of {result.totalQuestions} questions. This paper has no
+                answer key set, so it ran in practice mode (no score).
               </p>
             )}
           </div>
 
           <div className="result-questions">
             {result.results.map(r => {
-              const q = byNumber[r.number]
               const status = !r.isGraded ? 'ungraded' : (r.your === r.correct ? 'correct' : (r.your != null ? 'wrong' : 'skipped'))
               return (
                 <div key={r.number} className={`result-q card ${status === 'correct' ? 'card-correct' : status === 'wrong' ? 'card-wrong' : ''}`}>
@@ -134,7 +137,7 @@ export default function PaperTest() {
                       {status === 'correct' ? 'Correct' : status === 'wrong' ? 'Wrong' : status === 'skipped' ? 'Skipped' : 'Practice'}
                     </span>
                   </div>
-                  {q && <img className="pt-q-image" src={q.imageUrl} alt={`Question ${r.number}`} loading="lazy" />}
+                  <img className="pt-q-image" src={r.image} alt={`Question ${r.number}`} loading="lazy" />
                   <div className="pt-answer-row">
                     <span>Your answer: <b>{r.your != null ? LETTERS[r.your] : '—'}</b></span>
                     {r.isGraded && <span>Correct: <b style={{ color: '#4ade80' }}>{LETTERS[r.correct]}</b></span>}
@@ -174,8 +177,8 @@ export default function PaperTest() {
             {fmt(timeLeft)}
           </div>
         </div>
-        <button className="btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.8rem' }} onClick={confirmSubmit} disabled={submitting}>
-          {submitting ? 'Submitting…' : 'Submit'}
+        <button className="btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.8rem' }} onClick={confirmSubmit}>
+          Submit
         </button>
       </div>
 
@@ -184,7 +187,7 @@ export default function PaperTest() {
           <p className="section-label" style={{ marginBottom: '0.75rem' }}>Questions ({questions.length})</p>
           <div className="q-grid">
             {questions.map((qq, i) => (
-              <button key={qq.id} className={`q-btn q-${qStatus(i)}`} onClick={() => setCurrentQ(i)}>
+              <button key={qq.number} className={`q-btn q-${qStatus(i)}`} onClick={() => setCurrentQ(i)}>
                 {qq.number}
               </button>
             ))}
@@ -209,7 +212,7 @@ export default function PaperTest() {
               </button>
             </div>
 
-            <img className="pt-q-image" src={q.imageUrl} alt={`Question ${q.number}`} />
+            <img className="pt-q-image" src={q.image} alt={`Question ${q.number}`} />
 
             <div className="pt-options">
               {LETTERS.map((L, oi) => (
