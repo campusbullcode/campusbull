@@ -19,9 +19,30 @@ export default function MockTests() {
   const [userStats, setUserStats] = useState(null)
 
   useEffect(() => {
-    apiFetch('/tests')
-      .then(data => setTests(data))
-      .catch(() => setTests([]))
+    // Load demo/curated tests AND real question papers, merged into one grid.
+    Promise.all([
+      apiFetch('/tests').catch(() => []),
+      apiFetch('/papers').catch(() => []),
+    ])
+      .then(([demoTests, papers]) => {
+        const paperTests = papers
+          .filter(p => p.questionCount > 0)            // only papers with extracted questions
+          .map(p => ({
+            id: `paper-${p.slug}`,
+            isPaper: true,
+            slug: p.slug,
+            type: 'PYQ',
+            title: `${p.title} — Full Paper`,
+            subjects: ['Physics', 'Chemistry', 'Biology'],
+            questions: p.questionCount,
+            duration: p.durationMin,
+            attempts: 0,
+            avgScore: 0,
+            difficulty: 'Real',
+            tag: p.gradedCount > 0 ? 'New' : null,
+          }))
+        setTests([...paperTests, ...demoTests])         // full papers first
+      })
       .finally(() => setLoading(false))
 
     if (user) {
@@ -136,6 +157,7 @@ export default function MockTests() {
                 style={{ width: '100%', justifyContent: 'center', marginTop: '1.25rem' }}
                 onClick={() => {
                   if (!user) navigate('/')
+                  else if (t.isPaper) navigate(`/dashboard/paper-test/${t.slug}`)
                   else navigate(`/dashboard/mock-test/${t.id}`)
                 }}
               >
