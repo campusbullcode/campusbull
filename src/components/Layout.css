@@ -10,6 +10,19 @@
   gap: 1.5rem;
   z-index: 100;
   overflow-y: auto;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile menu controls — hidden on desktop */
+.mobile-menu-btn,
+.sidebar-close-btn { display: none; }
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  backdrop-filter: blur(2px);
 }
 
 .sidebar-logo {
@@ -162,9 +175,52 @@
   .grid-3 { grid-template-columns: repeat(2, 1fr); }
 }
 
+@media (max-width: 1024px) {
+  /* Off-canvas sidebar: hidden until toggled */
+  .sidebar { transform: translateX(-100%); box-shadow: 4px 0 24px rgba(0,0,0,0.4); }
+  .sidebar.open { transform: translateX(0); }
+
+  /* Hamburger button — fixed top-left */
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0.85rem;
+    left: 0.85rem;
+    z-index: 90;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--surface-container);
+    color: var(--on-surface);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    cursor: pointer;
+  }
+
+  /* Close (X) inside the sidebar */
+  .sidebar-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--surface-container);
+    color: var(--on-surface-variant);
+    cursor: pointer;
+  }
+
+  /* Give page content room for the floating hamburger */
+  .main-content { padding-top: 3.25rem; }
+}
+
 @media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
-  .main-content { margin-left: 0; }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
 }
 

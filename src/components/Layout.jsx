@@ -15,6 +15,7 @@ const navItems = [
 export default function Layout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const [navOpen, setNavOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
   const [chatInput, setChatInput] = useState('')
   const [messages, setMessages] = useState([
@@ -52,8 +53,19 @@ export default function Layout() {
 
   return (
     <div className="app-layout">
+      {/* Mobile menu button */}
+      <button className="mobile-menu-btn" onClick={() => setNavOpen(true)} aria-label="Open menu">
+        <span className="material-icons">menu</span>
+      </button>
+
+      {/* Mobile overlay */}
+      {navOpen && <div className="sidebar-overlay" onClick={() => setNavOpen(false)} />}
+
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${navOpen ? 'open' : ''}`}>
+        <button className="sidebar-close-btn" onClick={() => setNavOpen(false)} aria-label="Close menu">
+          <span className="material-icons">close</span>
+        </button>
         <div className="sidebar-logo">
           <img src={campusBullLogo} alt="Campus Bull" className="logo-img" />
         </div>
@@ -77,6 +89,7 @@ export default function Layout() {
               key={item.to}
               to={item.to}
               end={item.to === '/dashboard'}
+              onClick={() => setNavOpen(false)}
               className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
             >
               <span className="material-icons">{item.icon}</span>
@@ -87,7 +100,7 @@ export default function Layout() {
           {user?.role === 'ADMIN' && (
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
               <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--on-surface-variant)', marginBottom: '0.5rem', paddingLeft: '1rem' }}>Admin Tools</div>
-              <NavLink to="/admin" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+              <NavLink to="/admin" onClick={() => setNavOpen(false)} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
                 <span className="material-icons">admin_panel_settings</span>
                 <span>Admin Console</span>
               </NavLink>
