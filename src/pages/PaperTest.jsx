@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { apiFetch } from '../utils/api'
 import './MockTestInterface.css'
 import './PaperTest.css'
 
@@ -52,11 +53,17 @@ export default function PaperTest() {
       return { number: q.number, subject: q.subject, image: q.image, your: your ?? null,
                correct: isGraded ? q.correctOption : null, isGraded }
     })
+    const score = correct * 4 - wrong
+    const maxScore = gradedCount * 4
     setResult({
       title: paper.title, totalQuestions: questions.length,
-      gradedCount, attempted, correct, wrong,
-      score: correct * 4 - wrong, maxScore: gradedCount * 4, results,
+      gradedCount, attempted, correct, wrong, score, maxScore, results,
     })
+    // Record into the user's running stats (only for graded papers; ignores if not logged in)
+    if (gradedCount > 0) {
+      const scorePercent = maxScore > 0 ? Math.max(0, (score / maxScore) * 100) : 0
+      apiFetch('/user/record-test', { method: 'POST', body: JSON.stringify({ scorePercent }) }).catch(() => {})
+    }
   }, [questions, answers, paper])
 
   useEffect(() => {

@@ -128,6 +128,31 @@ router.get('/stats', async (req, res) => {
   }
 })
 
+// POST /api/user/record-test — record a (static) paper test result into running stats
+// body: { scorePercent } (0-100). Updates testsTaken + avgScore.
+router.post('/record-test', async (req, res) => {
+  try {
+    let { scorePercent } = req.body
+    scorePercent = Math.max(0, Math.min(100, Number(scorePercent) || 0))
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { testsTaken: true, avgScore: true },
+    })
+    if (!user) return res.status(404).json({ error: 'User not found' })
+    const newCount = (user.testsTaken || 0) + 1
+    const newAvg = ((user.avgScore || 0) * (user.testsTaken || 0) + scorePercent) / newCount
+    const updated = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { testsTaken: newCount, avgScore: Math.round(newAvg * 10) / 10, lastActiveAt: new Date() },
+      select: { testsTaken: true, avgScore: true },
+    })
+    res.json(updated)
+  } catch (err) {
+    console.error('record-test', err)
+    res.status(500).json({ error: 'Failed to record test' })
+  }
+})
+
 // GET /api/user/attempts — test history
 router.get('/attempts', async (req, res) => {
   try {
