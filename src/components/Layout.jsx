@@ -10,7 +10,6 @@ const navItems = [
   { to: '/dashboard/mock-tests',           icon: 'quiz',            label: 'Mock Test'             },
   { to: '/dashboard/question-papers',      icon: 'description',     label: 'Question Papers'       },
   { to: '/dashboard/college-predictor',    icon: 'account_balance', label: 'College Predictor'     },
-  { to: '/dashboard/expert-counselling',   icon: 'support_agent',   label: 'Expert Counselling'    },
   { to: '/dashboard/profile',              icon: 'manage_accounts', label: 'My Profile'            },
 ]
 
