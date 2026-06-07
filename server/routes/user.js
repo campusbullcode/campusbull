@@ -36,21 +36,25 @@ router.patch('/profile', async (req, res) => {
     
     const currentUser = await prisma.user.findUnique({
       where: { id: req.user.userId },
-      select: { rankUpdates: true, bestRank: true }
+      select: { rankUpdates: true, bestRank: true, role: true }
     })
 
-    let updateData = { 
-      name, phone, branch, category, domicile, 
+    let updateData = {
+      name, phone, branch, category, domicile,
       targetYear: targetYear ? Number(targetYear) : undefined,
-      ugOrPg, address 
+      ugOrPg, address
     }
 
     if (bestRank !== undefined && String(bestRank) !== String(currentUser.bestRank)) {
-      if (currentUser.rankUpdates < 2) {
-        updateData.bestRank = Number(bestRank)
+      const nextRank = bestRank === '' || bestRank === null ? null : Number(bestRank)
+      if (currentUser.role === 'ADMIN') {
+        // Admins can change their rank as often as they want.
+        updateData.bestRank = nextRank
+      } else if (currentUser.rankUpdates < 2) {
+        updateData.bestRank = nextRank
         updateData.rankUpdates = currentUser.rankUpdates + 1
       } else {
-        return res.status(400).json({ error: 'You can only update your rank twice.' })
+        return res.status(400).json({ error: 'You can only update your rank twice. Contact admin to request more.' })
       }
     }
 
@@ -128,22 +132,49 @@ router.get('/stats', async (req, res) => {
   }
 })
 
-// POST /api/user/record-test — record a (static) paper test result into running stats
-// body: { scorePercent } (0-100). Updates testsTaken + avgScore.
+// POST /api/user/record-test — record a (static) paper test attempt into running stats.
+// body: { slug, graded (bool), scorePercent (0-100, only when graded) }
+// Every completion bumps testsTaken; avgScore is the mean over GRADED attempts only,
+// so practice-mode papers no longer drag the average toward 0.
 router.post('/record-test', async (req, res) => {
   try {
-    let { scorePercent } = req.body
-    scorePercent = Math.max(0, Math.min(100, Number(scorePercent) || 0))
+    const { slug } = req.body
+    const graded = !!req.body.graded
+    const hasScore = graded && req.body.scorePercent !== null && req.body.scorePercent !== undefined
+    const scorePercent = hasScore ? Math.max(0, Math.min(100, Number(req.body.scorePercent) || 0)) : null
+
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
       select: { testsTaken: true, avgScore: true },
     })
     if (!user) return res.status(404).json({ error: 'User not found' })
-    const newCount = (user.testsTaken || 0) + 1
-    const newAvg = ((user.avgScore || 0) * (user.testsTaken || 0) + scorePercent) / newCount
+
+    const data = { testsTaken: (user.testsTaken || 0) + 1, lastActiveAt: new Date() }
+
+    // Per-paper result row + graded-only average. Wrapped so a not-yet-migrated
+    // PaperResult table can't break test completion.
+    try {
+      await prisma.paperResult.create({
+        data: { slug: slug || null, userId: req.user.userId, graded, scorePercent },
+      })
+      if (hasScore) {
+        const agg = await prisma.paperResult.aggregate({
+          _avg: { scorePercent: true },
+          where: { userId: req.user.userId, graded: true },
+        })
+        data.avgScore = Math.round((agg._avg.scorePercent || 0) * 10) / 10
+      }
+    } catch (e) {
+      // Fallback (table missing): keep the legacy running-mean for graded attempts.
+      if (hasScore) {
+        const newAvg = ((user.avgScore || 0) * (user.testsTaken || 0) + scorePercent) / data.testsTaken
+        data.avgScore = Math.round(newAvg * 10) / 10
+      }
+    }
+
     const updated = await prisma.user.update({
       where: { id: req.user.userId },
-      data: { testsTaken: newCount, avgScore: Math.round(newAvg * 10) / 10, lastActiveAt: new Date() },
+      data,
       select: { testsTaken: true, avgScore: true },
     })
     res.json(updated)

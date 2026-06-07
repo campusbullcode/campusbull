@@ -123,6 +123,20 @@ model PaperQuestion {
   @@unique([paperId, number])
 }
 
+// One row per completed static-paper attempt (keyed by slug, not a DB paper row,
+// so it also covers the mock papers that only exist as static manifests).
+model PaperResult {
+  id           String   @id @default(uuid())
+  slug         String?
+  userId       String?
+  graded       Boolean  @default(false)
+  scorePercent Float?                          // null for practice-mode (ungraded) papers
+  createdAt    DateTime @default(now())
+
+  @@index([slug])
+  @@index([userId])
+}
+
 model College {
   id         String   @id @default(uuid())
   name       String

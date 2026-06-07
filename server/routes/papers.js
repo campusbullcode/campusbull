@@ -30,6 +30,36 @@ router.get('/', async (req, res) => {
   }
 })
 
+// GET /api/papers/stats — per-paper aggregate stats keyed by slug (public).
+// { "<slug>": { attempts, avgScore } }  — avgScore is null for practice-only papers.
+// Defined BEFORE /:slug so the literal route isn't swallowed by the param route.
+router.get('/stats', async (req, res) => {
+  try {
+    const [counts, avgs] = await Promise.all([
+      prisma.paperResult.groupBy({ by: ['slug'], _count: { _all: true } }),
+      prisma.paperResult.groupBy({
+        by: ['slug'],
+        where: { graded: true, scorePercent: { not: null } },
+        _avg: { scorePercent: true },
+      }),
+    ])
+    const avgBySlug = Object.fromEntries(avgs.map(a => [a.slug, a._avg.scorePercent]))
+    const out = {}
+    for (const c of counts) {
+      if (!c.slug) continue
+      const avg = avgBySlug[c.slug]
+      out[c.slug] = {
+        attempts: c._count._all,
+        avgScore: avg == null ? null : Math.round(avg * 10) / 10,
+      }
+    }
+    res.json(out)
+  } catch (err) {
+    // Table not migrated yet → no stats, cards fall back to defaults.
+    res.json({})
+  }
+})
+
 // GET /api/papers/:slug — paper + questions WITHOUT the answer key (public)
 router.get('/:slug', async (req, res) => {
   try {

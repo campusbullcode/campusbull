@@ -44,6 +44,19 @@ export default function AdminUsers() {
     }
   };
 
+  const resetRankUpdates = async (id) => {
+    if (!window.confirm('Reset this user\'s rank-update count to 0? They will be able to change their rank twice again.')) return;
+    try {
+      await apiFetch(`/admin/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ rankUpdates: 0 })
+      });
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const premiumCount = users.filter(u => u.isPro).length;
   const adminCount = users.filter(u => u.role === 'ADMIN').length;
 
@@ -99,13 +112,14 @@ export default function AdminUsers() {
                 <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-widest">Name</th>
                 <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-widest">Email</th>
                 <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-widest">Role / Plan</th>
+                <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-widest">Best Rank / Updates</th>
                 <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-widest">Joined At</th>
                 <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/10">
               {loading ? (
-                <tr><td colSpan="5" className="px-6 py-8 text-center text-zinc-500">Loading users...</td></tr>
+                <tr><td colSpan="6" className="px-6 py-8 text-center text-zinc-500">Loading users...</td></tr>
               ) : (
                 users.map(u => (
                   <tr key={u.id} className="hover:bg-surface-container-high/40 transition-colors cursor-pointer group">
@@ -130,9 +144,16 @@ export default function AdminUsers() {
                       {u.isPro && <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-bold uppercase tracking-wider">PRO</span>}
                     </td>
                     <td className="px-6 py-5">
+                      <span className="text-sm text-zinc-300">{u.bestRank != null ? `#${u.bestRank.toLocaleString()}` : '—'}</span>
+                      <span className="block text-xs text-zinc-500">{u.role === 'ADMIN' ? 'unlimited' : `${u.rankUpdates ?? 0}/2 used`}</span>
+                    </td>
+                    <td className="px-6 py-5">
                       <span className="text-sm text-zinc-400">{new Date(u.createdAt).toLocaleDateString()}</span>
                     </td>
-                    <td className="px-6 py-5 text-right">
+                    <td className="px-6 py-5 text-right whitespace-nowrap">
+                      <button onClick={() => resetRankUpdates(u.id)} className="p-2 text-zinc-400 hover:text-white disabled:opacity-30" title="Reset rank-update count" disabled={u.role === 'ADMIN' || (u.rankUpdates ?? 0) === 0}>
+                        <span className="material-symbols-outlined text-sm">restart_alt</span>
+                      </button>
                       <button onClick={() => togglePro(u.id, u.isPro)} className="p-2 text-zinc-400 hover:text-white" title="Toggle PRO Status">
                         <span className="material-symbols-outlined text-sm">workspace_premium</span>
                       </button>

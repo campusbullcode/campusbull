@@ -12,7 +12,7 @@ router.use(requireAdmin)
 router.get('/users', async (req, res) => {
   try {
     const users = await prisma.user.findMany({
-      select: { id: true, name: true, email: true, role: true, isPro: true, createdAt: true },
+      select: { id: true, name: true, email: true, role: true, isPro: true, createdAt: true, bestRank: true, rankUpdates: true },
       orderBy: { createdAt: 'desc' }
     })
     res.json(users)
@@ -25,12 +25,18 @@ router.get('/users', async (req, res) => {
 router.patch('/users/:id', async (req, res) => {
   try {
     const { id } = req.params
-    const { role, isPro } = req.body
+    const { role, isPro, rankUpdates } = req.body
+
+    const data = {}
+    if (role !== undefined) data.role = role
+    if (isPro !== undefined) data.isPro = isPro
+    // Admin can reset a student's rank-update counter (e.g. to 0) to grant more changes.
+    if (rankUpdates !== undefined) data.rankUpdates = Number(rankUpdates)
 
     const updatedUser = await prisma.user.update({
       where: { id },
-      data: { role, isPro },
-      select: { id: true, name: true, email: true, role: true, isPro: true }
+      data,
+      select: { id: true, name: true, email: true, role: true, isPro: true, bestRank: true, rankUpdates: true }
     })
     res.json(updatedUser)
   } catch (err) {

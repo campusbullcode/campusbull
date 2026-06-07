@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../utils/api'
 import './MockTestInterface.css'
@@ -6,12 +6,48 @@ import './PaperTest.css'
 
 const STYLES = { ABCD: ['A', 'B', 'C', 'D'], '1234': ['1', '2', '3', '4'] }
 
+// Canonical NEET subject order; anything else (e.g. "Other") is appended after these.
+const SUBJECT_ORDER = ['Physics', 'Chemistry', 'Botany', 'Zoology', 'Biology']
+
+function shuffle(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+// Group questions by subject (canonical order) and shuffle WITHIN each subject.
+// Returns the flat working order + section descriptors for the palette.
+function arrange(questions) {
+  const bySubject = new Map()
+  for (const q of questions) {
+    const key = q.subject || 'Other'
+    if (!bySubject.has(key)) bySubject.set(key, [])
+    bySubject.get(key).push(q)
+  }
+  const keys = [
+    ...SUBJECT_ORDER.filter(s => bySubject.has(s)),
+    ...[...bySubject.keys()].filter(s => !SUBJECT_ORDER.includes(s)),
+  ]
+  const ordered = []
+  const sections = []
+  for (const k of keys) {
+    const items = shuffle(bySubject.get(k))
+    sections.push({ subject: k, start: ordered.length, count: items.length })
+    for (const q of items) ordered.push(q)
+  }
+  return { ordered, sections }
+}
+
 export default function PaperTest() {
   const { slug } = useParams()
   const navigate = useNavigate()
 
   const [paper, setPaper] = useState(null)
-  const [questions, setQuestions] = useState([])
+  const [questions, setQuestions] = useState([])   // working order (segregated + shuffled)
+  const [sections, setSections] = useState([])     // [{ subject, start, count }]
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -21,6 +57,7 @@ export default function PaperTest() {
   const [marked, setMarked] = useState({})
   const [timeLeft, setTimeLeft] = useState(0)
   const [result, setResult] = useState(null)
+  const [paletteOpen, setPaletteOpen] = useState(false)  // mobile drawer
   const doneRef = useRef(false)
 
   useEffect(() => {
@@ -29,7 +66,9 @@ export default function PaperTest() {
       .then(r => { if (!r.ok) throw new Error('Paper not found'); return r.json() })
       .then(m => {
         setPaper(m)
-        setQuestions(m.questions || [])
+        const { ordered, sections } = arrange(m.questions || [])
+        setQuestions(ordered)
+        setSections(sections)
         setTimeLeft((m.durationMin || 180) * 60)
       })
       .catch(e => setError(e.message))
@@ -38,11 +77,17 @@ export default function PaperTest() {
 
   const LETTERS = STYLES[paper?.optionStyle] || STYLES.ABCD
 
+  // Subject breakdown for the start screen
+  const breakdown = useMemo(
+    () => sections.map(s => ({ subject: s.subject, count: s.count })),
+    [sections]
+  )
+
   const grade = useCallback(() => {
     if (doneRef.current) return
     doneRef.current = true
     let correct = 0, wrong = 0, attempted = 0, gradedCount = 0
-    const results = questions.map(q => {
+    const results = questions.map((q, i) => {
       const your = answers[q.number]
       const isGraded = q.correctOption !== null && q.correctOption !== undefined
       if (isGraded) gradedCount++
@@ -50,7 +95,7 @@ export default function PaperTest() {
         attempted++
         if (isGraded) { if (your === q.correctOption) correct++; else wrong++ }
       }
-      return { number: q.number, subject: q.subject, image: q.image, your: your ?? null,
+      return { seq: i + 1, number: q.number, subject: q.subject, image: q.image, your: your ?? null,
                correct: isGraded ? q.correctOption : null, isGraded }
     })
     const score = correct * 4 - wrong
@@ -59,12 +104,15 @@ export default function PaperTest() {
       title: paper.title, totalQuestions: questions.length,
       gradedCount, attempted, correct, wrong, score, maxScore, results,
     })
-    // Record into the user's running stats (only for graded papers; ignores if not logged in)
-    if (gradedCount > 0) {
-      const scorePercent = maxScore > 0 ? Math.max(0, (score / maxScore) * 100) : 0
-      apiFetch('/user/record-test', { method: 'POST', body: JSON.stringify({ scorePercent }) }).catch(() => {})
-    }
-  }, [questions, answers, paper])
+    // Record into the user's running stats. Every completion counts toward "Tests Taken";
+    // a score is only recorded when the paper has an answer key (graded). Ignored if logged out.
+    const graded = gradedCount > 0
+    const scorePercent = graded && maxScore > 0 ? Math.max(0, (score / maxScore) * 100) : null
+    apiFetch('/user/record-test', {
+      method: 'POST',
+      body: JSON.stringify({ slug, graded, scorePercent }),
+    }).catch(() => {})
+  }, [questions, answers, paper, slug])
 
   useEffect(() => {
     if (!started || result) return
@@ -91,8 +139,17 @@ export default function PaperTest() {
             <div className="test-begin-stat"><span className="material-icons">schedule</span> {paper.durationMin} Minutes</div>
             <div className="test-begin-stat"><span className="material-icons">stars</span> +4 / −1 Marking</div>
           </div>
+          {breakdown.length > 0 && (
+            <div className="test-begin-subjects">
+              {breakdown.map(b => (
+                <span key={b.subject} className="chip" style={{ fontSize: '0.75rem' }}>
+                  {b.subject}: {b.count}
+                </span>
+              ))}
+            </div>
+          )}
           <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.85rem', textAlign: 'center', maxWidth: 460, lineHeight: 1.6 }}>
-            Each question is shown as an image with all options. Pick {LETTERS.join(', ')}.
+            Questions are grouped by subject and shuffled for this attempt. Each is shown as an image with all options — pick {LETTERS.join(', ')}.
             {paper.gradedCount > 0
               ? ' Your score is calculated against the official answer key.'
               : ' This paper runs in practice mode (no answer key set), so you can review your choices but no score is shown.'}
@@ -101,7 +158,7 @@ export default function PaperTest() {
             onClick={() => setStarted(true)}>
             <span className="material-icons">play_arrow</span> Begin Test
           </button>
-          <button className="btn-ghost" onClick={() => navigate('/dashboard/question-papers')}>← Back to Papers</button>
+          <button className="btn-ghost" onClick={() => navigate('/dashboard/mock-tests')}>← Back to Tests</button>
         </div>
       </div>
     )
@@ -128,7 +185,7 @@ export default function PaperTest() {
             ) : (
               <p style={{ color: 'var(--on-surface-variant)', textAlign: 'center', maxWidth: 460 }}>
                 You attempted <b>{result.attempted}</b> of {result.totalQuestions} questions. This paper has no
-                answer key set, so it ran in practice mode (no score).
+                answer key set, so it ran in practice mode (no score). It still counts toward your tests taken.
               </p>
             )}
           </div>
@@ -139,12 +196,12 @@ export default function PaperTest() {
               return (
                 <div key={r.number} className={`result-q card ${status === 'correct' ? 'card-correct' : status === 'wrong' ? 'card-wrong' : ''}`}>
                   <div className="pt-result-head">
-                    <span>Q{r.number}{r.subject ? ` · ${r.subject}` : ''}</span>
+                    <span>Q{r.seq}{r.subject ? ` · ${r.subject}` : ''}</span>
                     <span className={`pt-tag pt-${status}`}>
                       {status === 'correct' ? 'Correct' : status === 'wrong' ? 'Wrong' : status === 'skipped' ? 'Skipped' : 'Practice'}
                     </span>
                   </div>
-                  <img className="pt-q-image" src={r.image} alt={`Question ${r.number}`} loading="lazy" />
+                  <img className="pt-q-image" src={r.image} alt={`Question ${r.seq}`} loading="lazy" />
                   <div className="pt-answer-row">
                     <span>Your answer: <b>{r.your != null ? LETTERS[r.your] : '—'}</b></span>
                     {r.isGraded && <span>Correct: <b style={{ color: '#4ade80' }}>{LETTERS[r.correct]}</b></span>}
@@ -153,8 +210,8 @@ export default function PaperTest() {
               )
             })}
           </div>
-          <button className="btn-primary" onClick={() => navigate('/dashboard/question-papers')}>
-            <span className="material-icons">arrow_back</span> Back to Papers
+          <button className="btn-primary" onClick={() => navigate('/dashboard/mock-tests')}>
+            <span className="material-icons">arrow_back</span> Back to Tests
           </button>
         </div>
       </div>
@@ -170,9 +227,10 @@ export default function PaperTest() {
     if (i === currentQ) return 'current'
     return 'unattempted'
   }
+  const answeredCount = Object.keys(answers).length
 
   return (
-    <div className="test-interface">
+    <div className="test-interface pt-interface">
       <div className="test-topbar glass">
         <div className="test-top-left">
           <span className="material-icons" style={{ color: 'var(--primary)' }}>quiz</span>
@@ -189,14 +247,36 @@ export default function PaperTest() {
         </button>
       </div>
 
+      {/* Mobile-only bar to open the question palette */}
+      <button className="palette-toggle" onClick={() => setPaletteOpen(true)}>
+        <span className="material-icons" style={{ fontSize: '1.1rem' }}>grid_view</span>
+        Questions · {answeredCount}/{questions.length} answered
+      </button>
+
       <div className="test-body">
-        <aside className="test-sidebar glass">
-          <p className="section-label" style={{ marginBottom: '0.75rem' }}>Questions ({questions.length})</p>
-          <div className="q-grid">
-            {questions.map((qq, i) => (
-              <button key={qq.number} className={`q-btn q-${qStatus(i)}`} onClick={() => setCurrentQ(i)}>
-                {qq.number}
-              </button>
+        <aside className={`test-sidebar glass ${paletteOpen ? 'open' : ''}`}>
+          <div className="palette-head">
+            <p className="section-label" style={{ margin: 0 }}>Questions ({questions.length})</p>
+            <button className="palette-close" onClick={() => setPaletteOpen(false)} aria-label="Close">
+              <span className="material-icons">close</span>
+            </button>
+          </div>
+          <div className="palette-scroll">
+            {sections.map(sec => (
+              <div key={sec.subject} className="q-section">
+                <div className="q-section-title">{sec.subject} <span>({sec.count})</span></div>
+                <div className="q-grid">
+                  {questions.slice(sec.start, sec.start + sec.count).map((qq, idx) => {
+                    const i = sec.start + idx
+                    return (
+                      <button key={qq.number} className={`q-btn q-${qStatus(i)}`}
+                        onClick={() => { setCurrentQ(i); setPaletteOpen(false) }}>
+                        {i + 1}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             ))}
           </div>
           <div className="q-legend">
@@ -205,12 +285,13 @@ export default function PaperTest() {
             ))}
           </div>
         </aside>
+        {paletteOpen && <div className="palette-backdrop" onClick={() => setPaletteOpen(false)} />}
 
         <div className="test-main">
           <div className="question-card card animate-in">
             <div className="q-meta">
               <span className="chip">{q.subject || 'Question'}</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>Q {q.number} / {questions.length}</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>Q {currentQ + 1} / {questions.length}</span>
               <button className={`btn-ghost mark-btn ${marked[q.number] ? 'marked' : ''}`}
                 onClick={() => setMarked(m => ({ ...m, [q.number]: !m[q.number] }))}
                 style={{ padding: '0.3rem 0.75rem', fontSize: '0.75rem', marginLeft: 'auto' }}>
@@ -219,7 +300,7 @@ export default function PaperTest() {
               </button>
             </div>
 
-            <img className="pt-q-image" src={q.image} alt={`Question ${q.number}`} />
+            <img className="pt-q-image" src={q.image} alt={`Question ${currentQ + 1}`} />
 
             <div className="pt-options">
               {LETTERS.map((L, oi) => (

@@ -198,20 +198,26 @@ export default function Profile() {
                 </div>
                 <div className="field-group">
                   <label className="field-label">
-                    Best Rank 
+                    Best Rank
                     <span style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--on-surface-variant)', marginLeft: '0.5rem' }}>
-                      (Updates left: {2 - (user.rankUpdates || 0)})
+                      {user.role === 'ADMIN'
+                        ? '(unlimited updates)'
+                        : `(Updates left: ${Math.max(0, 2 - (user.rankUpdates || 0))})`}
                     </span>
                   </label>
-                  <input 
-                    className="field-input" 
-                    type="number" 
-                    value={form.bestRank} 
-                    onChange={e => setForm({ ...form, bestRank: e.target.value })} 
-                    placeholder="Enter rank" 
-                    disabled={user.rankUpdates >= 2} 
-                    required 
+                  <input
+                    className="field-input"
+                    type="number"
+                    value={form.bestRank}
+                    onChange={e => setForm({ ...form, bestRank: e.target.value })}
+                    placeholder="e.g. 12500"
+                    disabled={user.role !== 'ADMIN' && user.rankUpdates >= 2}
+                    required
                   />
+                  <span style={{ fontSize: '0.72rem', color: 'var(--on-surface-variant)', marginTop: '0.35rem', display: 'block' }}>
+                    Your best NEET All-India Rank (a lower number is better).
+                    {user.role !== 'ADMIN' && user.rankUpdates >= 2 && ' Limit reached — contact admin to request more changes.'}
+                  </span>
                 </div>
                 <div className="field-group">
                   <label className="field-label">Stream / Branch</label>

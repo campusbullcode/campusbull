@@ -19,28 +19,34 @@ export default function MockTests() {
   const [userStats, setUserStats] = useState(null)
 
   useEffect(() => {
-    // Load demo/curated tests AND real question papers (static index), merged.
+    // Load demo/curated tests AND real question papers (static index) + live per-paper stats, merged.
     Promise.all([
       apiFetch('/tests').catch(() => []),
       fetch('/papers/index.json').then(r => r.ok ? r.json() : []).catch(() => []),
+      apiFetch('/papers/stats').catch(() => ({})),
     ])
-      .then(([demoTests, papers]) => {
+      .then(([demoTests, papers, stats]) => {
         const paperTests = papers
           .filter(p => p.questionCount > 0)            // only papers with extracted questions
-          .map(p => ({
-            id: `paper-${p.slug}`,
-            isPaper: true,
-            slug: p.slug,
-            type: 'PYQ',
-            title: `${p.title} — Full Paper`,
-            subjects: ['Physics', 'Chemistry', 'Biology'],
-            questions: p.questionCount,
-            duration: p.durationMin,
-            attempts: 0,
-            avgScore: 0,
-            difficulty: 'Real',
-            tag: p.gradedCount > 0 ? 'New' : null,
-          }))
+          .map(p => {
+            const s = stats?.[p.slug] || {}
+            const graded = p.gradedCount > 0
+            return {
+              id: `paper-${p.slug}`,
+              isPaper: true,
+              slug: p.slug,
+              type: 'PYQ',
+              title: `${p.title} — Full Paper`,
+              subjects: ['Physics', 'Chemistry', 'Biology'],
+              questions: p.questionCount,
+              duration: p.durationMin,
+              attempts: s.attempts || 0,
+              // null = practice-only paper (no answer key), so no score is possible.
+              avgScore: graded ? (s.avgScore ?? 0) : null,
+              difficulty: 'Real',
+              tag: graded ? 'New' : null,
+            }
+          })
         setTests([...paperTests, ...demoTests])         // full papers first
       })
       .finally(() => setLoading(false))
@@ -145,10 +151,14 @@ export default function MockTests() {
               <div style={{ marginTop: '0.75rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--on-surface-variant)', marginBottom: '0.4rem' }}>
                   <span>Avg Score</span>
-                  <span style={{ color: 'var(--secondary)', fontWeight: 600 }}>{Math.round(t.avgScore)}%</span>
+                  {t.avgScore == null ? (
+                    <span style={{ color: 'var(--on-surface-variant)', fontWeight: 600 }}>Practice mode</span>
+                  ) : (
+                    <span style={{ color: 'var(--secondary)', fontWeight: 600 }}>{Math.round(t.avgScore)}%</span>
+                  )}
                 </div>
                 <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: `${t.avgScore}%`, background: 'linear-gradient(90deg, #f8bd2a88, #f8bd2a)' }} />
+                  <div className="progress-fill" style={{ width: `${t.avgScore == null ? 0 : t.avgScore}%`, background: 'linear-gradient(90deg, #f8bd2a88, #f8bd2a)' }} />
                 </div>
               </div>
 
