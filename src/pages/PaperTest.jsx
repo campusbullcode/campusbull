@@ -95,7 +95,8 @@ export default function PaperTest() {
         attempted++
         if (isGraded) { if (your === q.correctOption) correct++; else wrong++ }
       }
-      return { seq: i + 1, number: q.number, subject: q.subject, image: q.image, your: your ?? null,
+      return { seq: i + 1, number: q.number, subject: q.subject, image: q.image,
+               question: q.question, options: q.options, your: your ?? null,
                correct: isGraded ? q.correctOption : null, isGraded }
     })
     const score = correct * 4 - wrong
@@ -149,7 +150,7 @@ export default function PaperTest() {
             </div>
           )}
           <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.85rem', textAlign: 'center', maxWidth: 460, lineHeight: 1.6 }}>
-            Questions are grouped by subject and shuffled for this attempt. Each is shown as an image with all options — pick {LETTERS.join(', ')}.
+            Questions are grouped by subject and shuffled for this attempt. Pick one option ({LETTERS.join(', ')}) per question; figures are shown where needed.
             {paper.gradedCount > 0
               ? ' Your score is calculated against the official answer key.'
               : ' This paper runs in practice mode (no answer key set), so you can review your choices but no score is shown.'}
@@ -201,7 +202,17 @@ export default function PaperTest() {
                       {status === 'correct' ? 'Correct' : status === 'wrong' ? 'Wrong' : status === 'skipped' ? 'Skipped' : 'Practice'}
                     </span>
                   </div>
-                  <img className="pt-q-image" src={r.image} alt={`Question ${r.seq}`} loading="lazy" />
+                  {r.question && <p className="pt-q-text">{r.question}</p>}
+                  {r.image && <img className="pt-q-image" src={r.image} alt={`Question ${r.seq} figure`} loading="lazy" />}
+                  {r.options && (
+                    <ul className="pt-result-options">
+                      {r.options.map((opt, oi) => (
+                        <li key={oi} className={oi === r.correct ? 'opt-correct' : (oi === r.your ? 'opt-wrong' : '')}>
+                          <b>{LETTERS[oi]}.</b> {opt}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   <div className="pt-answer-row">
                     <span>Your answer: <b>{r.your != null ? LETTERS[r.your] : '—'}</b></span>
                     {r.isGraded && <span>Correct: <b style={{ color: '#4ade80' }}>{LETTERS[r.correct]}</b></span>}
@@ -300,14 +311,16 @@ export default function PaperTest() {
               </button>
             </div>
 
-            <img className="pt-q-image" src={q.image} alt={`Question ${currentQ + 1}`} />
+            {q.question && <p className="pt-q-text">{q.question}</p>}
+            {q.image && <img className="pt-q-image" src={q.image} alt={`Question ${currentQ + 1} figure`} />}
 
-            <div className="pt-options">
+            <div className={`pt-options ${q.options ? 'text-mode' : ''}`}>
               {LETTERS.map((L, oi) => (
                 <button key={oi}
                   className={`q-option pt-option ${answers[q.number] === oi ? 'selected' : ''}`}
                   onClick={() => setAnswers(a => ({ ...a, [q.number]: oi }))}>
                   <span className="option-letter">{L}</span>
+                  {q.options && <span className="option-text">{q.options[oi]}</span>}
                 </button>
               ))}
             </div>

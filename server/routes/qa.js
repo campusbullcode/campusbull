@@ -82,20 +82,21 @@ router.patch('/question/:id/status', verifyToken, async (req, res) => {
   }
 })
 
-// POST /api/qa/question/:id/answer — post an answer (admins only, or maybe users?)
+// POST /api/qa/question/:id/answer — post an answer (any authenticated user)
 router.post('/question/:id/answer', verifyToken, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user.userId } })
-    if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Only admins can answer right now' })
 
     const { content } = req.body
     if (!content) return res.status(400).json({ error: 'Content is required' })
 
-    // If an admin answers, let's automatically approve the question
-    await prisma.question.update({
-      where: { id: req.params.id },
-      data: { status: 'APPROVED' }
-    })
+    // Admin answers auto-approve the question
+    if (user.role === 'ADMIN') {
+      await prisma.question.update({
+        where: { id: req.params.id },
+        data: { status: 'APPROVED' }
+      })
+    }
 
     const answer = await prisma.answer.create({
       data: {

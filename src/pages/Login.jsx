@@ -6,23 +6,33 @@ import './Login.css'
 export default function Login() {
   const { login, register } = useAuth()
   const [isLogin, setIsLogin] = useState(true)
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' })
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [otpStep, setOtpStep] = useState(false)
+  const [otp, setOtp] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
 
+    if (!isLogin && !otpStep) {
+      // Move to OTP verification step
+      setOtpStep(true)
+      return
+    }
+
+    setLoading(true)
     try {
       if (isLogin) {
         await login(formData.email, formData.password)
       } else {
-        await register(formData.name, formData.email, formData.password)
+        await register(formData.name, formData.email, formData.password, formData.phone)
       }
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.')
+      if (!isLogin) setOtpStep(false)
     } finally {
       setLoading(false)
     }
@@ -67,14 +77,14 @@ export default function Login() {
         <div className="lg:col-span-7 flex flex-col items-center lg:items-end w-full">
           {/* Auth Module Toggle Navigation */}
           <div className="mb-8 flex bg-surface-container-low p-1 rounded-xl w-fit relative z-20">
-            <button 
-              onClick={() => { setIsLogin(true); setError(''); }}
+            <button
+              onClick={() => { setIsLogin(true); setError(''); setOtpStep(false); setOtp(''); }}
               className={`px-8 py-2.5 rounded-lg text-sm font-semibold transition-all ${isLogin ? 'bg-surface-container text-on-surface shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
             >
               Login
             </button>
-            <button 
-              onClick={() => { setIsLogin(false); setError(''); }}
+            <button
+              onClick={() => { setIsLogin(false); setError(''); setOtpStep(false); setOtp(''); }}
               className={`px-8 py-2.5 rounded-lg text-sm font-semibold transition-all ${!isLogin ? 'bg-surface-container text-on-surface shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
             >
               Sign Up
@@ -98,15 +108,52 @@ export default function Login() {
               </div>
             )}
 
+            {/* OTP Step */}
+            {otpStep && !isLogin ? (
+              <form className="space-y-6" onSubmit={handleSubmit}>
+                <div className="text-center space-y-2 pb-2">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                    <span className="material-symbols-outlined text-3xl text-primary">sms</span>
+                  </div>
+                  <p className="text-sm text-on-surface-variant">
+                    We've sent a 6-digit OTP to <span className="font-semibold text-on-surface">{formData.phone || formData.email}</span>
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">Enter OTP</label>
+                  <input
+                    className="w-full bg-surface-container-highest border-none rounded-xl py-4 px-4 text-on-surface text-center text-2xl tracking-[0.5em] placeholder:text-on-surface-variant/30 focus:ring-2 focus:ring-primary/40 transition-all outline-none"
+                    placeholder="------"
+                    type="text"
+                    maxLength={6}
+                    value={otp}
+                    onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+                    required
+                    autoFocus
+                  />
+                </div>
+                <button
+                  className="w-full bg-kinetic-gradient py-4 rounded-xl font-headline font-bold text-lg text-white shadow-[0_8px_32px_rgba(211,47,47,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:hover:scale-100"
+                  type="submit"
+                  disabled={loading || otp.length < 6}
+                >
+                  {loading ? 'Verifying...' : 'Verify & Go to Dashboard'}
+                  {!loading && <span className="material-symbols-outlined text-xl">arrow_forward</span>}
+                </button>
+                <button type="button" onClick={() => { setOtpStep(false); setOtp('') }} className="w-full text-sm text-on-surface-variant hover:text-on-surface transition-colors py-2">
+                  ← Back to Sign Up
+                </button>
+              </form>
+            ) : (
             <form className="space-y-6" onSubmit={handleSubmit}>
               {!isLogin && (
                 <div className="space-y-2">
                   <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">Full Name</label>
                   <div className="relative">
                     <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50">person</span>
-                    <input 
-                      className="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/30 focus:ring-2 focus:ring-primary/40 transition-all outline-none" 
-                      placeholder="Jane Doe" 
+                    <input
+                      className="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/30 focus:ring-2 focus:ring-primary/40 transition-all outline-none"
+                      placeholder="Jane Doe"
                       type="text"
                       value={formData.name}
                       onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -120,9 +167,9 @@ export default function Login() {
                 <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">Email Address</label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50">mail</span>
-                  <input 
-                    className="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/30 focus:ring-2 focus:ring-primary/40 transition-all outline-none" 
-                    placeholder="aspirant@campusbull.com" 
+                  <input
+                    className="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/30 focus:ring-2 focus:ring-primary/40 transition-all outline-none"
+                    placeholder="aspirant@campusbull.com"
                     type="email"
                     value={formData.email}
                     onChange={e => setFormData({ ...formData, email: e.target.value })}
@@ -130,6 +177,23 @@ export default function Login() {
                   />
                 </div>
               </div>
+
+              {!isLogin && (
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">Phone Number</label>
+                  <div className="relative">
+                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50">phone</span>
+                    <input
+                      className="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/30 focus:ring-2 focus:ring-primary/40 transition-all outline-none"
+                      placeholder="+91 98765 43210"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                      required={!isLogin}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <div className="flex justify-between items-center ml-1">
@@ -140,15 +204,18 @@ export default function Login() {
                 </div>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50">lock</span>
-                  <input 
-                    className="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-12 text-on-surface placeholder:text-on-surface-variant/30 focus:ring-2 focus:ring-primary/40 transition-all outline-none" 
-                    placeholder="••••••••" 
-                    type="password"
+                  <input
+                    className="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-12 text-on-surface placeholder:text-on-surface-variant/30 focus:ring-2 focus:ring-primary/40 transition-all outline-none"
+                    placeholder="••••••••"
+                    type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={e => setFormData({ ...formData, password: e.target.value })}
-                    required 
+                    required
                   />
-                  <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 cursor-pointer hover:text-on-surface transition-colors">visibility</span>
+                  <span
+                    className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 cursor-pointer hover:text-on-surface transition-colors"
+                    onClick={() => setShowPassword(v => !v)}
+                  >{showPassword ? 'visibility_off' : 'visibility'}</span>
                 </div>
               </div>
 
@@ -159,15 +226,16 @@ export default function Login() {
                 </div>
               )}
 
-              <button 
-                className="w-full bg-kinetic-gradient py-4 rounded-xl font-headline font-bold text-lg text-white shadow-[0_8px_32px_rgba(211,47,47,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:hover:scale-100" 
+              <button
+                className="w-full bg-kinetic-gradient py-4 rounded-xl font-headline font-bold text-lg text-white shadow-[0_8px_32px_rgba(211,47,47,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:hover:scale-100"
                 type="submit"
                 disabled={loading}
               >
-                {loading ? 'Processing...' : (isLogin ? 'Login to Dashboard' : 'Create Account')}
+                {loading ? 'Processing...' : (isLogin ? 'Login to Dashboard' : 'Verify')}
                 {!loading && <span className="material-symbols-outlined text-xl">arrow_forward</span>}
               </button>
             </form>
+            )}
 
             {isLogin && (
               <>

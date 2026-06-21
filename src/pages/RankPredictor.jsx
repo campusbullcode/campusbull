@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { apiFetch } from '../utils/api'
+import { useAuth } from '../context/AuthContext'
+import { predictorAccess, bumpUsed } from '../constants/predictorLimits'
 import './RankPredictor.css'
 
 // College mock data removed; we now use real data from the PostgreSQL predictions table.
@@ -49,6 +51,13 @@ function buildPath(pts) {
 }
 
 export default function RankPredictor() {
+  const { user } = useAuth()
+  const [, forceTick] = useState(0)   // re-render after a run bumps the stored count
+  const access = predictorAccess(user, 'rank')
+  const lockMessage = access.tier === 'FREE'
+    ? 'You have used your free Rank Predictor run. Upgrade to PRO for more.'
+    : 'You have used all your Rank Predictor runs. Contact admin for more.'
+
   const [totalScoreInput, setTotalScoreInput] = useState(600)
   const [category, setCategory] = useState('General')
   const [state, setState] = useState('All India')
@@ -56,6 +65,7 @@ export default function RankPredictor() {
   const [aiiquo, setAiiquo] = useState(true)
   const [apiResult, setApiResult] = useState(null)
   const [apiLoading, setApiLoading] = useState(false)
+  const [limitError, setLimitError] = useState(null)
 
   const totalScore = Number(totalScoreInput) || 0
   const predictedRank = apiResult?.estimatedRank || predictRank(totalScore)
@@ -63,7 +73,8 @@ export default function RankPredictor() {
 
   const handlePredict = async e => {
     e.preventDefault()
-    setPredicted(true)
+    if (access.locked) { setLimitError(lockMessage); return }
+    setLimitError(null)
     setApiLoading(true)
     try {
       const result = await apiFetch('/predict/rank', {
@@ -71,8 +82,17 @@ export default function RankPredictor() {
         body: JSON.stringify({ score: totalScore, category })
       })
       setApiResult(result)
+      setPredicted(true)
+      bumpUsed(user, 'rank')          // count this run
+      forceTick(t => t + 1)
     } catch (err) {
-      console.warn('Prediction API unavailable, using local estimate')
+      if (err.status === 403) {
+        setLimitError(err.message)
+      } else {
+        // Network/server hiccup — fall back to the local estimate.
+        setPredicted(true)
+        console.warn('Prediction API unavailable, using local estimate')
+      }
     } finally {
       setApiLoading(false)
     }
@@ -113,9 +133,23 @@ export default function RankPredictor() {
         <div className="predictor-left">
           <form onSubmit={handlePredict} className="card animate-in">
             <h2 className="card-heading">Enter Your Scores</h2>
-            <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', marginBottom: '1.5rem' }}>
+            <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', marginBottom: '1rem' }}>
               Based on official 2024 NEET marking scheme
             </p>
+
+            {/* Usage allowance */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', marginBottom: '1rem', color: 'var(--on-surface-variant)' }}>
+              <span className="material-icons" style={{ fontSize: '1rem', color: 'var(--primary)' }}>bolt</span>
+              {access.unlimited
+                ? <span><strong>Unlimited</strong> predictions (Admin)</span>
+                : <span><strong>{access.left}</strong> of {access.limit} prediction{access.limit !== 1 ? 's' : ''} left{access.tier === 'FREE' ? ' · Upgrade to PRO for 2' : ''}</span>}
+            </div>
+
+            {limitError && (
+              <div className="card" style={{ padding: '0.75rem 1rem', marginBottom: '1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', fontSize: '0.8rem' }}>
+                {limitError}
+              </div>
+            )}
 
             <div className="field-group" style={{ marginTop: '1rem' }}>
               <label className="field-label" style={{ color: 'var(--primary)' }}>
@@ -157,9 +191,9 @@ export default function RankPredictor() {
               </label>
             </div>
 
-            <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '1.5rem' }}>
-              <span className="material-icons">auto_graph</span>
-              Predict My Rank
+            <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '1.5rem', opacity: (access.locked || apiLoading) ? 0.6 : 1, cursor: access.locked ? 'not-allowed' : 'pointer' }} disabled={access.locked || apiLoading}>
+              <span className="material-icons">{access.locked ? 'lock' : 'auto_graph'}</span>
+              {access.locked ? 'Limit Reached' : apiLoading ? 'Predicting…' : 'Predict My Rank'}
             </button>
           </form>
 

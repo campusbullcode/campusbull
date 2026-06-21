@@ -20,11 +20,14 @@ const allowedOrigins = [
   process.env.FRONTEND_URL, // e.g. https://campus-bull.vercel.app
 ].filter(Boolean)
 
+// Any localhost / 127.0.0.1 origin (any port) is treated as local dev.
+const isLocalhost = (origin) => /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+
 app.use(cors({
   origin: (origin, callback) => {
     // allow server-to-server / curl / Postman (no origin)
     if (!origin) return callback(null, true)
-    if (allowedOrigins.some(o => origin.startsWith(o)) || origin.endsWith('.vercel.app')) {
+    if (isLocalhost(origin) || allowedOrigins.some(o => origin.startsWith(o)) || origin.endsWith('.vercel.app')) {
       return callback(null, true)
     }
     callback(new Error(`CORS blocked: ${origin}`))

@@ -9,7 +9,16 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* A/B/C/D selector — options live inside the question image, so these are just letters */
+/* Question text (text-based papers) */
+.pt-q-text {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--on-surface);
+  margin: 0.25rem 0 1.1rem;
+  white-space: pre-wrap;
+}
+
+/* A/B/C/D selector — letter-only (image papers, options baked into the image) */
 .pt-options {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -20,6 +29,46 @@
   padding: 0.75rem 0.5rem;
 }
 .pt-option .option-letter { margin: 0; }
+
+/* Text-based options — stacked full-width rows with the option text */
+.pt-options.text-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.pt-options.text-mode .pt-option {
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  text-align: left;
+}
+.pt-options.text-mode .option-letter { flex: 0 0 auto; }
+.pt-options.text-mode .option-text {
+  flex: 1;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Result-screen option list with correct/your highlighting */
+.pt-result-options {
+  list-style: none;
+  margin: 0.25rem 0 0.5rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.pt-result-options li {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  color: var(--on-surface-variant);
+}
+.pt-result-options li.opt-correct { background: rgba(74, 222, 128, 0.14); color: #4ade80; }
+.pt-result-options li.opt-wrong   { background: rgba(239, 68, 68, 0.14);  color: #f87171; }
 
 .pt-result-head {
   display: flex; align-items: center; justify-content: space-between;

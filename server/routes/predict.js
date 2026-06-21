@@ -1,6 +1,29 @@
 import express from 'express'
+import { verifyToken } from '../middleware/auth.js'
 
 const router = express.Router()
+
+// ── Predictor tier access ───────────────────────────────────────────────────
+// Per-account run counts ("Pro: rank x2 / college x1", "Free: rank x1 / college locked")
+// are enforced on the client (no DB column needed). The SERVER enforces feature
+// access by tier: the College Predictor is PRO/ADMIN only; the Rank Predictor is
+// available to any logged-in user. Tier comes from existing role/isPro columns.
+const tierOf = (u) => (u && u.role === 'ADMIN' ? 'ADMIN' : (u && u.isPro ? 'PRO' : 'FREE'))
+
+// Returns { ok, status?, error?, tier }. `proOnly` blocks FREE users.
+async function checkAccess(userId, { proOnly = false } = {}) {
+  const u = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, isPro: true },
+  })
+  if (!u) return { ok: false, status: 404, error: 'User not found' }
+  const tier = tierOf(u)
+  if (proOnly && tier === 'FREE') {
+    return { ok: false, status: 403, limitReached: true, tier,
+      error: 'College Predictor is a PRO feature. Upgrade to PRO to unlock it.' }
+  }
+  return { ok: true, tier }
+}
 
 // NEET rank bracket table (score → rank range)
 // Based on official NEET 2024 statistics
@@ -29,8 +52,8 @@ const RANK_BRACKETS = [
 // College eligibility brackets
 import { prisma } from '../utils/db.js'
 
-// POST /api/predict/rank — predict rank and matching colleges
-router.post('/rank', async (req, res) => {
+// POST /api/predict/rank — predict rank and matching colleges (auth + usage-limited)
+router.post('/rank', verifyToken, async (req, res) => {
   try {
     const { score, category = 'General' } = req.body
 
@@ -85,7 +108,7 @@ router.post('/rank', async (req, res) => {
       rankRange: { min: bracket.minRank, max: bracket.maxRank },
       percentile,
       eligibleColleges: eligibleColleges,
-      totalEligible: Math.max(eligibleColleges.length, totalEligibleCount)
+      totalEligible: Math.max(eligibleColleges.length, totalEligibleCount),
     })
   } catch (err) {
     console.error(err)
@@ -181,13 +204,16 @@ router.get('/colleges', async (req, res) => {
 })
 
 // POST /api/predict/college — detailed college search
-router.post('/college', async (req, res) => {
+router.post('/college', verifyToken, async (req, res) => {
   try {
     const { rank, state, courseType, counsellingType, category, quota, collegeName, budget, limit } = req.body
 
     if (!rank || rank < 0) {
       return res.status(400).json({ error: 'Valid rank is required' })
     }
+
+    const gate = await checkAccess(req.user.userId, { proOnly: true })
+    if (!gate.ok) return res.status(gate.status).json(gate)
 
     const tableName = await getTableName(state, counsellingType)
     if (!/^[a-zA-Z_]+$/.test(tableName)) return res.status(400).json({ error: 'Invalid state' })

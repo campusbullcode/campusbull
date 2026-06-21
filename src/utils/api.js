@@ -40,7 +40,10 @@ export const apiFetch = async (endpoint, options = {}) => {
   const data = await response.json().catch(() => null)
   
   if (!response.ok) {
-    throw new Error(data?.error || `API request failed with status ${response.status}`)
+    const err = new Error(data?.error || `API request failed with status ${response.status}`)
+    err.status = response.status
+    err.data = data
+    throw err
   }
 
   return data

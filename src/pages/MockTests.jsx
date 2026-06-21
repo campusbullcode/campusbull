@@ -19,13 +19,12 @@ export default function MockTests() {
   const [userStats, setUserStats] = useState(null)
 
   useEffect(() => {
-    // Load demo/curated tests AND real question papers (static index) + live per-paper stats, merged.
+    // Only the real question papers (static index) + live per-paper stats. No demo/curated tests.
     Promise.all([
-      apiFetch('/tests').catch(() => []),
       fetch('/papers/index.json').then(r => r.ok ? r.json() : []).catch(() => []),
       apiFetch('/papers/stats').catch(() => ({})),
     ])
-      .then(([demoTests, papers, stats]) => {
+      .then(([papers, stats]) => {
         const paperTests = papers
           .filter(p => p.questionCount > 0)            // only papers with extracted questions
           .map(p => {
@@ -47,7 +46,7 @@ export default function MockTests() {
               tag: graded ? 'New' : null,
             }
           })
-        setTests([...paperTests, ...demoTests])         // full papers first
+        setTests(paperTests)
       })
       .finally(() => setLoading(false))
 

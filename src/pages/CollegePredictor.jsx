@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { predictorAccess, bumpUsed } from '../constants/predictorLimits'
 import { apiFetch } from '../utils/api'
 import campusBullLogo from '../campus-bull-logo.png'
 import './CollegePredictor.css'
@@ -140,10 +141,16 @@ const CATEGORY_MAPPING = {
 
 export default function CollegePredictor() {
   const { user } = useAuth()
+  const [, forceTick] = useState(0)   // re-render after a run bumps the stored count
+  const access = predictorAccess(user, 'college')
+  const lockMessage = access.tier === 'FREE'
+    ? 'College Predictor is a PRO feature. Upgrade to PRO to unlock it.'
+    : 'You have used your College Predictor access. Contact admin for more.'
+  const [limitError, setLimitError] = useState(null)
 
   // Derive defaults from user profile
   const profileRank = user?.bestRank || ''
-  const profileCategory = user?.category || 'All'
+  const profileCategory = user?.category || 'GEN'
   const profileCourse = user?.ugOrPg || 'UG'
   const profileState = STATES_LIST.find(s => s.label === user?.domicile)?.value || 'All'
 
@@ -170,7 +177,7 @@ export default function CollegePredictor() {
   // Sync profile values if user loads later
   useEffect(() => {
     if (user?.bestRank && !rank) setRank(user.bestRank)
-    if (user?.category && category === 'G') setCategory(user.category)
+    if (user?.category && category === 'GEN') setCategory(user.category)
     if (user?.ugOrPg && courseType === 'UG') setCourseType(user.ugOrPg)
   }, [user])
 
@@ -207,7 +214,7 @@ export default function CollegePredictor() {
       grouped[group].sort((a, b) => a.localeCompare(b));
     }
     setDynamicCategories(grouped);
-    setCategory('All');
+    setCategory('GEN');
   }, [stateFilter])
 
   // Compute dynamic quotas
@@ -222,7 +229,9 @@ export default function CollegePredictor() {
   }, [stateFilter])
 
   const handleSearch = async () => {
+    if (access.locked) { setLimitError(lockMessage); return }
     if (!rank) { alert('Please enter your NEET rank'); return }
+    setLimitError(null)
     setSearched(true)
     setApiLoading(true)
     try {
@@ -242,9 +251,16 @@ export default function CollegePredictor() {
         })
       })
       setApiColleges(result.colleges || [])
+      bumpUsed(user, 'college')       // count this run
+      forceTick(t => t + 1)
     } catch (err) {
-      console.warn('College API error:', err)
-      setApiColleges([])
+      if (err.status === 403) {
+        setLimitError(err.message)
+        setSearched(false)
+      } else {
+        console.warn('College API error:', err)
+        setApiColleges([])
+      }
     } finally {
       setApiLoading(false)
     }
@@ -344,6 +360,32 @@ export default function CollegePredictor() {
         </div>
       </div>
 
+      {/* Usage allowance / lock banner */}
+      {access.locked ? (
+        <div className="card animate-in" style={{ padding: '1.25rem 1.5rem', marginBottom: '1.25rem', background: 'linear-gradient(135deg, rgba(248,189,42,0.12), var(--surface-container-low))', borderLeft: '4px solid var(--secondary)', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <span className="material-icons" style={{ color: 'var(--secondary)', fontSize: '1.6rem' }}>workspace_premium</span>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <p style={{ fontWeight: 600, marginBottom: '0.2rem' }}>{lockMessage}</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)' }}>
+              {access.tier === 'FREE' ? 'PRO members get 1 College Predictor run.' : 'Your run has been used.'}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', marginBottom: '1.25rem', color: 'var(--on-surface-variant)' }}>
+          <span className="material-icons" style={{ fontSize: '1rem', color: 'var(--primary)' }}>bolt</span>
+          {access.unlimited
+            ? <span><strong>Unlimited</strong> college searches (Admin)</span>
+            : <span><strong>{access.left}</strong> of {access.limit} college search{access.limit !== 1 ? 'es' : ''} left</span>}
+        </div>
+      )}
+
+      {limitError && (
+        <div className="card" style={{ padding: '0.75rem 1rem', marginBottom: '1.25rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', fontSize: '0.82rem' }}>
+          {limitError}
+        </div>
+      )}
+
       {/* Profile Banner */}
       {user?.bestRank && (
         <div className="card animate-in" style={{ padding: '1rem 1.5rem', marginBottom: '1.25rem', background: 'linear-gradient(135deg, var(--primary)15, var(--surface-container-low))', borderLeft: '4px solid var(--primary)', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -381,50 +423,6 @@ export default function CollegePredictor() {
             </div>
           </div>
 
-          {/* Category */}
-          <div className="field-group" style={{ flex: '1 1 140px' }}>
-            <label className="field-label">
-              <span className="material-icons" style={{ fontSize: '0.9rem' }}>people</span>
-              {' '}Category {categoriesLoading && <span style={{ fontSize: '0.7rem' }}>⏳</span>}
-            </label>
-            <select className="field-select" value={category} onChange={e => setCategory(e.target.value)} disabled={categoriesLoading} style={{ opacity: categoriesLoading ? 0.8 : 1, cursor: categoriesLoading ? 'wait' : 'pointer' }}>
-              <option value="All">All Categories</option>
-              {Object.keys(dynamicCategories).length > 0 ? (
-                Object.entries(dynamicCategories).map(([group, values]) => (
-                  <optgroup key={group} label={group}>
-                    {values.map(c => <option key={c} value={c}>{c}</option>)}
-                  </optgroup>
-                ))
-              ) : (
-                ['G', 'EWS', 'SC', 'ST', 'OBC', 'OBC-NCL'].map(c => <option key={c}>{c}</option>)
-              )}
-            </select>
-          </div>
-
-          {/* Quota */}
-          <div className="field-group" style={{ flex: '1 1 140px' }}>
-            <label className="field-label">
-              <span className="material-icons" style={{ fontSize: '0.9rem' }}>event_seat</span>
-              {' '}Seat Type / Quota {quotasLoading && <span style={{ fontSize: '0.7rem' }}>⏳</span>}
-            </label>
-            <select className="field-select" value={quota} onChange={e => setQuota(e.target.value)} disabled={quotasLoading} style={{ opacity: quotasLoading ? 0.8 : 1, cursor: quotasLoading ? 'wait' : 'pointer' }}>
-              <option value="All">All Quotas</option>
-              {dynamicQuotas.map(q => <option key={q} value={q}>{q}</option>)}
-            </select>
-          </div>
-
-          {/* Course Type (UG/PG) — locked from profile */}
-          <div className="field-group" style={{ flex: '1 1 120px' }}>
-            <label className="field-label">
-              <span className="material-icons" style={{ fontSize: '0.9rem' }}>school</span>
-              {' '}Course {courseLocked && <span style={{ color: '#4ade80', fontSize: '0.7rem' }}>● Profile</span>}
-            </label>
-            <select className="field-select" value={courseType} onChange={e => !courseLocked && setCourseType(e.target.value)} disabled={courseLocked} style={{ opacity: courseLocked ? 0.8 : 1, cursor: courseLocked ? 'not-allowed' : 'pointer' }}>
-              <option value="UG">UG (MBBS/BDS)</option>
-              <option value="PG">PG (MD/MS)</option>
-            </select>
-          </div>
-
           {/* Counselling Type */}
           <div className="field-group" style={{ flex: '1 1 160px' }}>
             <label className="field-label">
@@ -451,6 +449,50 @@ export default function CollegePredictor() {
               {STATES_LIST.map(s => (
                 <option key={s.value} value={s.value}>{s.label}</option>
               ))}
+            </select>
+          </div>
+
+          {/* Category */}
+          <div className="field-group" style={{ flex: '1 1 140px' }}>
+            <label className="field-label">
+              <span className="material-icons" style={{ fontSize: '0.9rem' }}>people</span>
+              {' '}Category {categoriesLoading && <span style={{ fontSize: '0.7rem' }}>⏳</span>}
+            </label>
+            <select className="field-select" value={category} onChange={e => setCategory(e.target.value)} disabled={categoriesLoading} style={{ opacity: categoriesLoading ? 0.8 : 1, cursor: categoriesLoading ? 'wait' : 'pointer' }}>
+              <option value="All">All Categories</option>
+              {Object.keys(dynamicCategories).length > 0 ? (
+                Object.entries(dynamicCategories).map(([group, values]) => (
+                  <optgroup key={group} label={group}>
+                    {values.map(c => <option key={c} value={c}>{c}</option>)}
+                  </optgroup>
+                ))
+              ) : (
+                ['GEN', 'EWS', 'SC', 'ST', 'OBC', 'OBC-NCL'].map(c => <option key={c}>{c}</option>)
+              )}
+            </select>
+          </div>
+
+          {/* Quota */}
+          <div className="field-group" style={{ flex: '1 1 140px' }}>
+            <label className="field-label">
+              <span className="material-icons" style={{ fontSize: '0.9rem' }}>event_seat</span>
+              {' '}Seat Type / Quota {quotasLoading && <span style={{ fontSize: '0.7rem' }}>⏳</span>}
+            </label>
+            <select className="field-select" value={quota} onChange={e => setQuota(e.target.value)} disabled={quotasLoading} style={{ opacity: quotasLoading ? 0.8 : 1, cursor: quotasLoading ? 'wait' : 'pointer' }}>
+              <option value="All">All Quotas</option>
+              {dynamicQuotas.map(q => <option key={q} value={q}>{q}</option>)}
+            </select>
+          </div>
+
+          {/* Course Type (UG/PG) — locked from profile */}
+          <div className="field-group" style={{ flex: '1 1 120px' }}>
+            <label className="field-label">
+              <span className="material-icons" style={{ fontSize: '0.9rem' }}>school</span>
+              {' '}Course {courseLocked && <span style={{ color: '#4ade80', fontSize: '0.7rem' }}>● Profile</span>}
+            </label>
+            <select className="field-select" value={courseType} onChange={e => !courseLocked && setCourseType(e.target.value)} disabled={courseLocked} style={{ opacity: courseLocked ? 0.8 : 1, cursor: courseLocked ? 'not-allowed' : 'pointer' }}>
+              <option value="UG">UG (MBBS/BDS)</option>
+              <option value="PG">PG (MD/MS)</option>
             </select>
           </div>
 
@@ -505,12 +547,12 @@ export default function CollegePredictor() {
 
           <button
             className="btn-primary"
-            style={{ flex: '1 1 100%', justifyContent: 'center', marginTop: '0.5rem' }}
+            style={{ flex: '1 1 100%', justifyContent: 'center', marginTop: '0.5rem', opacity: (access.locked || apiLoading) ? 0.6 : 1, cursor: access.locked ? 'not-allowed' : 'pointer' }}
             onClick={handleSearch}
-            disabled={apiLoading}
+            disabled={apiLoading || access.locked}
           >
-            <span className="material-icons">{apiLoading ? 'hourglass_empty' : 'search'}</span>
-            {apiLoading ? 'Searching...' : 'Find Colleges'}
+            <span className="material-icons">{access.locked ? 'lock' : apiLoading ? 'hourglass_empty' : 'search'}</span>
+            {access.locked ? (access.tier === 'FREE' ? 'PRO Feature — Locked' : 'Limit Reached') : apiLoading ? 'Searching...' : 'Find Colleges'}
           </button>
         </div>
       </div>

@@ -28,9 +28,11 @@ export default function Dashboard() {
   const [hoveredDay, setHoveredDay] = useState(null)
   const [loadingStats, setLoadingStats] = useState(true)
   const [qaPosts, setQaPosts] = useState([])
-  const [showAskModal, setShowAskModal] = useState(false)
   const [newQuestion, setNewQuestion] = useState('')
   const [posting, setPosting] = useState(false)
+  const [replyInputs, setReplyInputs] = useState({})
+  const [replyingTo, setReplyingTo] = useState(null)
+  const [postingReply, setPostingReply] = useState(false)
 
   useEffect(() => {
     if (!user) { setLoadingStats(false); return }
@@ -55,14 +57,32 @@ export default function Dashboard() {
         body: JSON.stringify({ content: newQuestion })
       })
       setNewQuestion('')
-      setShowAskModal(false)
-      alert('Your question has been submitted! Our counsellors will answer shortly.')
       const q = await apiFetch('/qa').catch(() => [])
       setQaPosts(q || [])
     } catch (err) {
       alert(err.message || 'Failed to post question')
     } finally {
       setPosting(false)
+    }
+  }
+
+  const handlePostReply = async (questionId) => {
+    const content = replyInputs[questionId]?.trim()
+    if (!content) return
+    setPostingReply(true)
+    try {
+      await apiFetch(`/qa/question/${questionId}/answer`, {
+        method: 'POST',
+        body: JSON.stringify({ content })
+      })
+      setReplyInputs(prev => ({ ...prev, [questionId]: '' }))
+      setReplyingTo(null)
+      const q = await apiFetch('/qa').catch(() => [])
+      setQaPosts(q || [])
+    } catch (err) {
+      alert(err.message || 'Failed to post reply')
+    } finally {
+      setPostingReply(false)
     }
   }
 
@@ -107,9 +127,9 @@ export default function Dashboard() {
   ]
 
   const RECOMMENDATIONS = [
-    { name: 'AIIMS New Delhi',  rank: '#1 India',  match: stats?.avgScore > 85 ? 92 : 45, color: '#d32f2f' },
-    { name: 'KGMU Lucknow',    rank: '#4 India',  match: stats?.avgScore > 70 ? 78 : 62, color: '#f8bd2a' },
-    { name: 'NIT-MAMC Delhi',  rank: '#2 Delhi',  match: stats?.avgScore > 75 ? 85 : 55, color: '#4ade80' },
+    { name: 'SDU University Kolar',     rank: '#3 Karnataka',     match: stats?.avgScore > 70 ? 74 : 58, color: '#d32f2f' },
+    { name: 'Aakash Medical College',  rank: '#5 Rajasthan',     match: stats?.avgScore > 80 ? 81 : 60, color: '#f8bd2a' },
+    { name: 'Saptagiri University',    rank: '#6 Karnataka',     match: stats?.avgScore > 65 ? 70 : 52, color: '#4ade80' },
   ]
 
   // Calendar
@@ -128,46 +148,6 @@ export default function Dashboard() {
 
   return (
     <div className="page-container">
-      {/* Ask Question Modal */}
-      {showAskModal && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
-        }}>
-          <div className="card animate-in" style={{ width: '100%', maxWidth: '540px', padding: '2rem', background: 'var(--surface-container)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Ask a Counselling Question</h2>
-              <button onClick={() => setShowAskModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)' }}>
-                <span className="material-icons">close</span>
-              </button>
-            </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', marginBottom: '1rem' }}>
-              Your question will be reviewed and answered by our counsellors before appearing on the forum.
-            </p>
-            <form onSubmit={handlePostQuestion}>
-              <textarea
-                style={{
-                  width: '100%', minHeight: '120px', background: 'var(--surface-container-highest)',
-                  border: '1px solid var(--outline-variant)', borderRadius: '0.75rem',
-                  padding: '1rem', color: 'var(--on-surface)', fontSize: '0.95rem',
-                  outline: 'none', resize: 'vertical', boxSizing: 'border-box'
-                }}
-                placeholder="e.g. With rank 45,000 OBC category, which state should I prefer for state counselling?"
-                value={newQuestion}
-                onChange={e => setNewQuestion(e.target.value)}
-                required
-              />
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                <button type="button" className="btn-secondary" onClick={() => setShowAskModal(false)}>Cancel</button>
-                <button type="submit" className="btn-primary" disabled={posting || !newQuestion.trim()}>
-                  <span className="material-icons">send</span>
-                  {posting ? 'Submitting...' : 'Submit Question'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Announcement Banner */}
       <AnnouncementBanner />
@@ -216,32 +196,111 @@ export default function Dashboard() {
         {/* Left: News + Calendar */}
         <div className="dash-col-left">
           <section className="animate-in">
-            <div className="section-row">
-              <p className="section-label">Q/A Forum Verified by Admins</p>
-              <button onClick={() => setShowAskModal(true)} className="view-all" style={{background: 'none', border: 'none', cursor: 'pointer', padding: 0}}>Ask Question →</button>
-            </div>
-            <div className="news-list" style={{ maxHeight: '380px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-              {qaPosts.length === 0 ? <p className="text-on-surface-variant text-sm p-4">No Q&A posts yet. Ask the first question!</p> : qaPosts.slice(0, 4).map(qa => (
-                <article key={qa.id} className="news-card animate-in" style={{ padding: '1rem', background: 'var(--surface-container-low)' }}>
-                  <div className="news-top" style={{ marginBottom: '0.5rem' }}>
-                    <span className="material-icons news-tag-icon" style={{ color: 'var(--primary)' }}>help_outline</span>
-                    <span className="news-time">Asked by {qa.user?.name || 'Student'} • {new Date(qa.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <h3 className="news-title" style={{ fontSize: '0.95rem', marginBottom: '0.5rem', lineHeight: 1.4 }}>Q: {qa.content}</h3>
-                  {qa.answers && qa.answers.length > 0 ? (
-                    <div style={{ padding: '0.75rem', background: 'var(--surface-container-highest)', borderRadius: '0.5rem', borderLeft: '3px solid #4ade80' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                        <span className="material-icons" style={{ fontSize: '0.9rem', color: '#4ade80' }}>verified</span>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#4ade80' }}>Ans: {qa.answers[0].user?.name || 'Admin'}</span>
-                      </div>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--on-surface)', lineHeight: 1.5 }}>{qa.answers[0].content}</p>
+            <p className="section-label">Q/A Forum</p>
+
+            {/* Inline ask box */}
+            <form onSubmit={handlePostQuestion} style={{ marginBottom: '1.25rem' }}>
+              <textarea
+                style={{
+                  width: '100%', minHeight: '72px', background: 'var(--surface-container-low)',
+                  border: '1px solid var(--outline-variant)', borderRadius: '0.75rem',
+                  padding: '0.75rem 1rem', color: 'var(--on-surface)', fontSize: '0.9rem',
+                  outline: 'none', resize: 'vertical', boxSizing: 'border-box', display: 'block'
+                }}
+                placeholder="Ask a counselling question — e.g. With rank 45,000 OBC, which state counselling should I prefer?"
+                value={newQuestion}
+                onChange={e => setNewQuestion(e.target.value)}
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button type="submit" className="btn-primary" disabled={posting || !newQuestion.trim()} style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>
+                  <span className="material-icons" style={{ fontSize: '1rem' }}>send</span>
+                  {posting ? 'Posting...' : 'Submit Question'}
+                </button>
+              </div>
+            </form>
+
+            {/* Q/A threads */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '520px', overflowY: 'auto', paddingRight: '0.25rem' }}>
+              {qaPosts.length === 0 ? (
+                <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', padding: '1rem 0' }}>No questions yet. Be the first to ask!</p>
+              ) : qaPosts.map(qa => (
+                <div key={qa.id} className="card animate-in" style={{ padding: '1rem', background: 'var(--surface-container-low)', borderRadius: '0.875rem' }}>
+                  {/* Question */}
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary)22', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span className="material-icons" style={{ fontSize: '1rem', color: 'var(--primary)' }}>help_outline</span>
                     </div>
-                  ) : (
-                    <div style={{ padding: '0.5rem', background: 'var(--surface-container-highest)', borderRadius: '0.5rem', opacity: 0.7 }}>
-                      <p style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>Pending expert answer...</p>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>
+                        {qa.user?.name || 'Student'} · {new Date(qa.createdAt).toLocaleDateString()}
+                        {qa.status === 'PENDING' && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', color: '#f8bd2a', background: '#f8bd2a15', padding: '0.1rem 0.4rem', borderRadius: '1rem' }}>Pending</span>}
+                      </div>
+                      <p style={{ fontSize: '0.92rem', fontWeight: 600, lineHeight: 1.45, color: 'var(--on-surface)' }}>{qa.content}</p>
+                    </div>
+                  </div>
+
+                  {/* Answers chain */}
+                  {qa.answers && qa.answers.length > 0 && (
+                    <div style={{ marginTop: '0.75rem', marginLeft: '2.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {qa.answers.map(ans => (
+                        <div key={ans.id} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: ans.user?.role === 'ADMIN' ? '#4ade8022' : 'var(--surface-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span className="material-icons" style={{ fontSize: '0.85rem', color: ans.user?.role === 'ADMIN' ? '#4ade80' : 'var(--on-surface-variant)' }}>
+                              {ans.user?.role === 'ADMIN' ? 'verified' : 'person'}
+                            </span>
+                          </div>
+                          <div style={{ flex: 1, background: ans.user?.role === 'ADMIN' ? '#4ade8010' : 'var(--surface-container-highest)', borderRadius: '0.5rem', padding: '0.6rem 0.75rem', borderLeft: ans.user?.role === 'ADMIN' ? '3px solid #4ade80' : '3px solid var(--outline-variant)' }}>
+                            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: ans.user?.role === 'ADMIN' ? '#4ade80' : 'var(--on-surface-variant)', marginBottom: '0.2rem' }}>
+                              {ans.user?.name || 'User'}{ans.user?.role === 'ADMIN' ? ' · Expert' : ''}
+                            </div>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--on-surface)', lineHeight: 1.5 }}>{ans.content}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
-                </article>
+
+                  {/* Reply toggle */}
+                  <div style={{ marginTop: '0.75rem', marginLeft: '2.75rem' }}>
+                    {replyingTo === qa.id ? (
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                        <textarea
+                          style={{
+                            flex: 1, minHeight: '56px', background: 'var(--surface-container-highest)',
+                            border: '1px solid var(--outline-variant)', borderRadius: '0.5rem',
+                            padding: '0.5rem 0.75rem', color: 'var(--on-surface)', fontSize: '0.85rem',
+                            outline: 'none', resize: 'none', boxSizing: 'border-box'
+                          }}
+                          placeholder="Write your answer..."
+                          value={replyInputs[qa.id] || ''}
+                          onChange={e => setReplyInputs(prev => ({ ...prev, [qa.id]: e.target.value }))}
+                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                          <button
+                            className="btn-primary"
+                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                            onClick={() => handlePostReply(qa.id)}
+                            disabled={postingReply || !replyInputs[qa.id]?.trim()}
+                          >
+                            {postingReply ? '...' : 'Post'}
+                          </button>
+                          <button
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}
+                            onClick={() => setReplyingTo(null)}
+                          >Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.78rem', color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: 0 }}
+                        onClick={() => setReplyingTo(qa.id)}
+                      >
+                        <span className="material-icons" style={{ fontSize: '0.9rem' }}>reply</span>
+                        Reply
+                      </button>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           </section>
@@ -269,8 +328,36 @@ export default function Dashboard() {
             </section>
           )}
 
+        </div>
+
+        {/* Right: Recommendations + CTA */}
+        <div className="dash-col-right">
+          <section className="animate-in">
+            <p className="section-label">Top Recommendations</p>
+            <div className="reco-list">
+              {RECOMMENDATIONS.map(r => (
+                <div key={r.name} className="reco-card card">
+                  <div className="reco-top">
+                    <div>
+                      <div className="reco-name">{r.name}</div>
+                      <div className="reco-rank">
+                        <span className="material-icons" style={{ fontSize: '0.8rem', color: '#f8bd2a' }}>star</span>
+                        {r.rank}
+                      </div>
+                    </div>
+                    <div className="reco-match" style={{ color: r.color }}>{r.match}%</div>
+                  </div>
+                  <div className="progress-bar" style={{ marginTop: '0.75rem' }}>
+                    <div className="progress-fill" style={{ width: `${r.match}%`, background: `linear-gradient(90deg, ${r.color}88, ${r.color})` }} />
+                  </div>
+                  <div className="reco-foot">Match Probability</div>
+                </div>
+              ))}
+            </div>
+          </section>
+
           {/* Monthly Tracker */}
-          <section className="animate-in" style={{ marginTop: '1.75rem' }}>
+          <section className="animate-in">
             <p className="section-label">Monthly Tracker</p>
             <div className="card cal-card">
               <div className="cal-header">
@@ -312,44 +399,6 @@ export default function Dashboard() {
               </p>
             </div>
           </section>
-        </div>
-
-        {/* Right: Recommendations + CTA */}
-        <div className="dash-col-right">
-          <section className="animate-in">
-            <p className="section-label">Top Recommendations</p>
-            <div className="reco-list">
-              {RECOMMENDATIONS.map(r => (
-                <div key={r.name} className="reco-card card">
-                  <div className="reco-top">
-                    <div>
-                      <div className="reco-name">{r.name}</div>
-                      <div className="reco-rank">
-                        <span className="material-icons" style={{ fontSize: '0.8rem', color: '#f8bd2a' }}>star</span>
-                        {r.rank}
-                      </div>
-                    </div>
-                    <div className="reco-match" style={{ color: r.color }}>{r.match}%</div>
-                  </div>
-                  <div className="progress-bar" style={{ marginTop: '0.75rem' }}>
-                    <div className="progress-fill" style={{ width: `${r.match}%`, background: `linear-gradient(90deg, ${r.color}88, ${r.color})` }} />
-                  </div>
-                  <div className="reco-foot">Match Probability</div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* CTA Card */}
-          <div className="cta-card animate-in">
-            <span className="material-icons cta-icon-mat">calendar_today</span>
-            <h3 className="cta-title">Expert Consultation</h3>
-            <p className="cta-desc">Book a 1:1 session with a senior counselor today.</p>
-            <Link to="/dashboard/expert-counselling" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-              <span className="material-icons">event</span>
-              Book Session
-            </Link>
-          </div>
 
           {/* Quick Links */}
           <div className="quick-links animate-in">

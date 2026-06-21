@@ -9,7 +9,7 @@ const router = express.Router()
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body
+    const { name, email, password, phone } = req.body
 
     // Basic validation
     if (!name || !email || !password) {
@@ -28,7 +28,7 @@ router.post('/register', async (req, res) => {
 
     // Save to DB (defaults to STUDENT role)
     const user = await prisma.user.create({
-      data: { name, email, passwordHash }
+      data: { name, email, passwordHash, ...(phone ? { phone } : {}) }
     })
 
     res.status(201).json({ message: 'Registration successful' })
