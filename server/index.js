@@ -65,6 +65,20 @@ app.get('/api/announcements', async (req, res) => {
   }
 })
 
+// Public: dashboard recommendations
+app.get('/api/recommendations', async (req, res) => {
+  try {
+    const colleges = await prisma.college.findMany({
+      where: { tier: 'recommendation' },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, state: true },
+    })
+    res.json(colleges)
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch recommendations' })
+  }
+})
+
 // ── Health / keep-alive endpoint ──────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })

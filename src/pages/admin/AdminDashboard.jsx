@@ -8,6 +8,7 @@ import AdminUsers from './AdminUsers';
 import AdminAdmission from './AdminAdmission';
 import AdminGuide from './AdminGuide';
 import AdminAnnouncements from './AdminAnnouncements';
+import AdminRecommendations from './AdminRecommendations';
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
@@ -21,6 +22,7 @@ export default function AdminDashboard() {
     { id: 'qa', icon: 'quiz', label: 'Q/A Management', component: <AdminQA /> },
     { id: 'admission', icon: 'school', label: 'Admission Counselling', component: <AdminAdmission /> },
     { id: 'guide', icon: 'support_agent', label: 'Guide Counselling', component: <AdminGuide /> },
+    { id: 'recommendations', icon: 'star', label: 'Recommendations', component: <AdminRecommendations /> },
   ];
 
   const handleLogout = () => {

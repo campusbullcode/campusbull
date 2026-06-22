@@ -262,4 +262,50 @@ router.patch('/papers/:id/answers', async (req, res) => {
   }
 })
 
+// ── Recommendations ───────────────────────────────────────────────────────────
+
+// GET list of recommendation colleges
+router.get('/recommendations', async (req, res) => {
+  try {
+    const colleges = await prisma.college.findMany({
+      where: { tier: 'recommendation' },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, state: true },
+    })
+    res.json(colleges)
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch recommendations' })
+  }
+})
+
+// POST add a recommendation college
+router.post('/recommendations', async (req, res) => {
+  try {
+    const { name, state } = req.body
+    if (!name?.trim()) return res.status(400).json({ error: 'College name is required' })
+    const college = await prisma.college.upsert({
+      where: { name_state: { name: name.trim(), state: (state || '').trim() } },
+      update: { tier: 'recommendation' },
+      create: { name: name.trim(), state: (state || '').trim() || null, tier: 'recommendation' },
+    })
+    res.status(201).json(college)
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to add recommendation' })
+  }
+})
+
+// DELETE remove a recommendation college
+router.delete('/recommendations/:id', async (req, res) => {
+  try {
+    await prisma.college.update({
+      where: { id: req.params.id },
+      data: { tier: null },
+    })
+    res.json({ message: 'Removed from recommendations' })
+  } catch (err) {
+    if (err.code === 'P2025') return res.status(404).json({ error: 'College not found' })
+    res.status(500).json({ error: 'Failed to remove recommendation' })
+  }
+})
+
 export default router

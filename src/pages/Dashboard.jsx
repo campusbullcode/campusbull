@@ -34,17 +34,26 @@ export default function Dashboard() {
   const [replyInputs, setReplyInputs] = useState({})
   const [replyingTo, setReplyingTo] = useState(null)
   const [postingReply, setPostingReply] = useState(false)
+  const [recommendations, setRecommendations] = useState([
+    { id: '1', name: 'SDU University Kolar',   location: 'Karnataka' },
+    { id: '2', name: 'Aakash Medical College',  location: 'Rajasthan' },
+    { id: '3', name: 'Saptagiri University',    location: 'Karnataka' },
+  ])
 
   useEffect(() => {
     if (!user) { setLoadingStats(false); return }
     Promise.all([
       apiFetch('/user/stats').catch(() => null),
       apiFetch('/user/attempts').catch(() => []),
-      apiFetch('/qa').catch(() => [])
-    ]).then(([s, a, q]) => {
+      apiFetch('/qa').catch(() => []),
+      fetch(`${import.meta.env.VITE_API_URL || ''}/api/recommendations`).then(r => r.json()).catch(() => null),
+    ]).then(([s, a, q, reco]) => {
       setStats(s)
       setRecentAttempts(a || [])
       setQaPosts(q || [])
+      if (Array.isArray(reco) && reco.length > 0) {
+        setRecommendations(reco.map(c => ({ id: c.id, name: c.name, location: c.state || '' })))
+      }
     }).finally(() => setLoadingStats(false))
   }, [user])
 
@@ -127,11 +136,6 @@ export default function Dashboard() {
     },
   ]
 
-  const RECOMMENDATIONS = [
-    { name: 'SDU University Kolar',    location: 'Karnataka' },
-    { name: 'Aakash Medical College',  location: 'Rajasthan' },
-    { name: 'Saptagiri University',    location: 'Karnataka' },
-  ]
 
   // Calendar
   const blanks = Array(START_DAY).fill(null)
@@ -226,7 +230,7 @@ export default function Dashboard() {
           <section className="animate-in">
             <p className="section-label">Top Recommendations</p>
             <div className="reco-list">
-              {RECOMMENDATIONS.map(r => (
+              {recommendations.map(r => (
                 <div key={r.name} className="reco-card card">
                   <div className="reco-top">
                     <div>
