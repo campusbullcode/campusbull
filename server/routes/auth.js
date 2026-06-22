@@ -9,12 +9,16 @@ const router = express.Router()
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body
+    const { name, email, password, phone, ugOrPg } = req.body
 
-    // Basic validation
+    // Basic validation — name, email, phone & password are all required at signup
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'All fields are required' })
     }
+    if (!phone || !String(phone).trim()) {
+      return res.status(400).json({ error: 'Phone number is required' })
+    }
+    const course = ugOrPg === 'PG' ? 'PG' : (ugOrPg === 'UG' ? 'UG' : undefined)
 
     // Check existing
     const existingUser = await prisma.user.findUnique({ where: { email } })
@@ -28,7 +32,7 @@ router.post('/register', async (req, res) => {
 
     // Save to DB (defaults to STUDENT role)
     const user = await prisma.user.create({
-      data: { name, email, passwordHash, ...(phone ? { phone } : {}) }
+      data: { name, email, passwordHash, ...(phone ? { phone } : {}), ...(course ? { ugOrPg: course } : {}) }
     })
 
     res.status(201).json({ message: 'Registration successful' })

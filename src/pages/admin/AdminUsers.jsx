@@ -4,6 +4,8 @@ import { apiFetch } from '../../utils/api';
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [courseFilter, setCourseFilter] = useState('All');   // 'All' | 'UG' | 'PG'
 
   useEffect(() => {
     fetchUsers();
@@ -60,13 +62,23 @@ export default function AdminUsers() {
   const premiumCount = users.filter(u => u.isPro).length;
   const adminCount = users.filter(u => u.role === 'ADMIN').length;
 
+  const q = search.trim().toLowerCase();
+  const filteredUsers = users.filter(u => {
+    const matchesCourse = courseFilter === 'All' || u.ugOrPg === courseFilter;
+    const matchesSearch = !q ||
+      u.name?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q) ||
+      u.phone?.toLowerCase().includes(q);
+    return matchesCourse && matchesSearch;
+  });
+
   return (
     <>
       <header className="sticky top-0 right-0 w-full h-20 bg-[#131314]/80 backdrop-blur-md z-40 flex justify-between items-center px-10 font-['Space_Grotesk'] font-medium">
         <div className="flex items-center gap-6 flex-1">
           <div className="relative w-96">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">search</span>
-            <input className="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-1 focus:ring-primary/40 text-zinc-200 placeholder-zinc-600 transition-all" placeholder="Search students..." type="text"/>
+            <input value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-1 focus:ring-primary/40 text-zinc-200 placeholder-zinc-600 transition-all" placeholder="Search by name, email or phone..." type="text"/>
           </div>
         </div>
       </header>
@@ -77,10 +89,17 @@ export default function AdminUsers() {
             <h2 className="text-4xl font-headline font-bold text-white tracking-tight">User Management</h2>
             <p className="text-zinc-500 mt-2 font-body">Manage, monitor, and support student performance across the platform.</p>
           </div>
-          <div className="flex gap-3">
-            <button className="bg-surface-container-highest text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-surface-container-high transition-colors flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm">filter_list</span> Filters
-            </button>
+          <div className="flex items-center gap-2 bg-surface-container-low p-1 rounded-lg">
+            <span className="material-symbols-outlined text-sm text-zinc-500 ml-2">filter_list</span>
+            {['All', 'UG', 'PG'].map(opt => (
+              <button
+                key={opt}
+                onClick={() => setCourseFilter(opt)}
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-colors ${courseFilter === opt ? 'bg-primary/15 text-primary' : 'text-zinc-400 hover:text-white'}`}
+              >
+                {opt === 'All' ? 'All' : opt}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -120,8 +139,10 @@ export default function AdminUsers() {
             <tbody className="divide-y divide-outline-variant/10">
               {loading ? (
                 <tr><td colSpan="6" className="px-6 py-8 text-center text-zinc-500">Loading users...</td></tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr><td colSpan="6" className="px-6 py-8 text-center text-zinc-500">No users match your filter.</td></tr>
               ) : (
-                users.map(u => (
+                filteredUsers.map(u => (
                   <tr key={u.id} className="hover:bg-surface-container-high/40 transition-colors cursor-pointer group">
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
@@ -136,12 +157,19 @@ export default function AdminUsers() {
                     </td>
                     <td className="px-6 py-5">
                       <p className="text-sm text-zinc-300">{u.email}</p>
+                      <p className="text-xs text-zinc-500 flex items-center gap-1 mt-0.5">
+                        <span className="material-symbols-outlined text-[13px]">call</span>
+                        {u.phone || '—'}
+                      </p>
                     </td>
-                    <td className="px-6 py-5 flex items-center gap-2">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${u.role === 'ADMIN' ? 'bg-secondary/10 text-secondary' : 'bg-surface-container text-zinc-400'}`}>
-                        {u.role}
-                      </span>
-                      {u.isPro && <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-bold uppercase tracking-wider">PRO</span>}
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${u.role === 'ADMIN' ? 'bg-secondary/10 text-secondary' : 'bg-surface-container text-zinc-400'}`}>
+                          {u.role}
+                        </span>
+                        {u.isPro && <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-bold uppercase tracking-wider">PRO</span>}
+                        {u.ugOrPg && <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-[10px] font-bold uppercase tracking-wider">{u.ugOrPg}</span>}
+                      </div>
                     </td>
                     <td className="px-6 py-5">
                       <span className="text-sm text-zinc-300">{u.bestRank != null ? `#${u.bestRank.toLocaleString()}` : '—'}</span>

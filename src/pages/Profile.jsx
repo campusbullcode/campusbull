@@ -71,6 +71,17 @@ export default function Profile() {
 
   const handleSave = async (e) => {
     e.preventDefault()
+    // Changing the saved NEET rank spends one of the (max 2) rank-update tokens.
+    const rankChanged = String(form.bestRank || '') !== String(user?.bestRank ?? '')
+    if (rankChanged && user?.role !== 'ADMIN') {
+      const left = Math.max(0, 2 - (user?.rankUpdates || 0))
+      const ok = window.confirm(
+        left > 0
+          ? `Heads up — saving a new NEET rank will use 1 of your ${left} remaining rank update${left !== 1 ? 's' : ''} (max 2). Continue?`
+          : 'You have no rank updates left (max 2). Your other details will save, but the rank won\'t change. Continue?'
+      )
+      if (!ok) return
+    }
     setSaving(true)
     setError('')
     setSaved(false)

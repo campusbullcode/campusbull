@@ -1,4 +1,7 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { apiFetch } from '../utils/api'
 import './LandingPage.css'
 
 /* ── Placeholder avatar initials component ── */
@@ -131,6 +134,38 @@ export default function LandingPage() {
 
   const goLogin = () => navigate('/login')
 
+  const [qa, setQa] = useState([])
+  const [modalQ, setModalQ] = useState(null)   // question whose full thread is open
+  const [visibleQa, setVisibleQa] = useState(5)
+  useEffect(() => {
+    apiFetch('/qa/public?limit=20').then(d => setQa(Array.isArray(d) ? d : [])).catch(() => setQa([]))
+  }, [])
+
+  // ── Inline hero auth card ──
+  const { login, register } = useAuth()
+  const [authMode, setAuthMode] = useState('login')   // 'login' | 'signup'
+  const [authForm, setAuthForm] = useState({ name: '', email: '', phone: '', password: '', ugOrPg: 'UG' })
+  const [authErr, setAuthErr] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
+  const [showPw, setShowPw] = useState(false)
+  const isLogin = authMode === 'login'
+
+  const handleAuth = async (e) => {
+    e.preventDefault()
+    setAuthErr('')
+    setAuthLoading(true)
+    try {
+      if (isLogin) await login(authForm.email, authForm.password)
+      else await register(authForm.name, authForm.email, authForm.password, authForm.phone, authForm.ugOrPg)
+      // on success AuthContext sets the user → "/" auto-redirects to /dashboard
+    } catch (err) {
+      setAuthErr(err.message || 'Something went wrong. Please try again.')
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+  const setField = (k) => (e) => setAuthForm(f => ({ ...f, [k]: e.target.value }))
+
   return (
     <div style={{ background: '#131314', minHeight: '100vh', overflowX: 'hidden' }}>
 
@@ -142,9 +177,10 @@ export default function LandingPage() {
             <li><a href="#features" className="active">Features</a></li>
             <li><a href="#how">How it Works</a></li>
             <li><a href="#why">Why Us</a></li>
+            <li><a href="#qa">Q/A</a></li>
           </ul>
           <button className="lp-cta-btn lp-nav-cta" onClick={goLogin}>
-            Get Started
+            Login / Sign Up
           </button>
         </div>
       </nav>
@@ -174,7 +210,7 @@ export default function LandingPage() {
 
               <div className="lp-hero-btns">
                 <button className="lp-cta-btn" onClick={goLogin} style={{ padding: '1rem 2rem', fontSize: '1rem' }}>
-                  Get Started
+                  Login / Sign Up
                 </button>
                 <button className="lp-btn-secondary" onClick={goLogin}>
                   Try Predictor
@@ -193,20 +229,72 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Right – dashboard preview */}
+            {/* Right – inline auth card */}
             <div className="lp-hero-visual">
               <div className="lp-hero-glow" />
-              <div className="lp-dashboard-card lp-glass">
-                <DashboardPreview />
-                <div className="lp-floating-stat lp-glass">
-                  <div className="lp-stat-icon">
-                    <span className="material-symbols-outlined ms-fill">analytics</span>
-                  </div>
-                  <div>
-                    <div className="lp-stat-label">Predicted Rank</div>
-                    <div className="lp-stat-value">4,281</div>
-                  </div>
+              <div className="lp-auth-card lp-glass">
+                <div className="lp-auth-toggle">
+                  <button type="button" className={isLogin ? 'active' : ''}
+                    onClick={() => { setAuthMode('login'); setAuthErr('') }}>Login</button>
+                  <button type="button" className={!isLogin ? 'active' : ''}
+                    onClick={() => { setAuthMode('signup'); setAuthErr('') }}>Sign Up</button>
                 </div>
+
+                <h3 className="lp-auth-title">{isLogin ? 'Welcome back' : 'Create your account'}</h3>
+                <p className="lp-auth-sub">
+                  {isLogin ? 'Enter your credentials to access your dashboard' : 'Join 15,000+ NEET aspirants today'}
+                </p>
+
+                {authErr && <div className="lp-auth-error">{authErr}</div>}
+
+                <form className="lp-auth-form" onSubmit={handleAuth}>
+                  {!isLogin && (
+                    <div className="lp-auth-field">
+                      <span className="material-symbols-outlined">person</span>
+                      <input type="text" placeholder="Full name" value={authForm.name} onChange={setField('name')} required />
+                    </div>
+                  )}
+                  <div className="lp-auth-field">
+                    <span className="material-symbols-outlined">mail</span>
+                    <input type="email" placeholder="aspirant@campusbull.com" value={authForm.email} onChange={setField('email')} required />
+                  </div>
+                  {!isLogin && (
+                    <div className="lp-auth-field">
+                      <span className="material-symbols-outlined">phone</span>
+                      <input type="tel" placeholder="+91 98765 43210" value={authForm.phone} onChange={setField('phone')} required />
+                    </div>
+                  )}
+                  {!isLogin && (
+                    <div className="lp-auth-course">
+                      {['UG', 'PG'].map(opt => (
+                        <button key={opt} type="button"
+                          className={authForm.ugOrPg === opt ? 'active' : ''}
+                          onClick={() => setAuthForm(f => ({ ...f, ugOrPg: opt }))}>
+                          {opt === 'UG' ? 'UG (MBBS/BDS)' : 'PG (MD/MS)'}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="lp-auth-field">
+                    <span className="material-symbols-outlined">lock</span>
+                    <input type={showPw ? 'text' : 'password'} placeholder="Password" value={authForm.password} onChange={setField('password')} required />
+                    <span className="material-symbols-outlined lp-auth-eye" onClick={() => setShowPw(v => !v)}>
+                      {showPw ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </div>
+
+                  <button className="lp-cta-btn lp-auth-submit" type="submit" disabled={authLoading}>
+                    {authLoading ? 'Please wait…' : (isLogin ? 'Login to Dashboard' : 'Create Account')}
+                    {!authLoading && <span className="material-symbols-outlined">arrow_forward</span>}
+                  </button>
+                </form>
+
+                <p className="lp-auth-switch">
+                  {isLogin ? "Don't have an account? " : 'Already have an account? '}
+                  <button type="button" onClick={() => { setAuthMode(isLogin ? 'signup' : 'login'); setAuthErr('') }}>
+                    {isLogin ? 'Sign up' : 'Log in'}
+                  </button>
+                </p>
               </div>
             </div>
 
@@ -424,6 +512,110 @@ export default function LandingPage() {
 
           </div>
         </section>
+
+        {/* ── COMMUNITY Q/A ── */}
+        <section className="lp-qa" id="qa">
+          <div className="lp-qa-inner">
+            <div className="lp-qa-head">
+              <span className="lp-section-tag">Community</span>
+              <h2 className="lp-qa-title">Latest <span className="lp-gradient-text">Questions &amp; Answers</span></h2>
+              <p className="lp-qa-sub">
+                Real questions from NEET aspirants — answered by the community and our experts.
+                Join in to ask your own or help others.
+              </p>
+            </div>
+
+            {/* Ask box — submitting takes you to sign in */}
+            <form className="lp-qa-ask" onSubmit={(e) => { e.preventDefault(); goLogin() }}>
+              <span className="material-symbols-outlined">help</span>
+              <input type="text" placeholder="Ask your question about ranks, colleges, counselling…" />
+              <button type="submit" className="lp-cta-btn">Post</button>
+            </form>
+
+            {qa.length === 0 ? (
+              <p className="lp-qa-empty">No questions yet — be the first to ask after you sign in.</p>
+            ) : (
+              <div className="lp-qa-list">
+                {qa.slice(0, visibleQa).map(q => {
+                  const top = q.answers && q.answers[0]
+                  const count = q.answers?.length || 0
+                  return (
+                    <div key={q.id} className="lp-qa-card">
+                      <div className="lp-qa-q">
+                        <span className="material-symbols-outlined ms-fill lp-qa-qicon">help</span>
+                        <p className="lp-qa-qtext">{q.content}</p>
+                      </div>
+                      <div className="lp-qa-meta">
+                        {q.user?.name || 'Student'} · {count} answer{count !== 1 ? 's' : ''}
+                      </div>
+                      {top ? (
+                        <div className={`lp-qa-answer ${top.user?.role === 'ADMIN' ? 'is-expert' : ''}`}>
+                          <div className="lp-qa-answer-by">
+                            {top.user?.role === 'ADMIN'
+                              ? <><span className="material-symbols-outlined lp-qa-verified">verified</span>{top.user?.name || 'Expert'} · Verified Answer</>
+                              : (top.user?.name || 'User')}
+                          </div>
+                          <p className="lp-qa-answer-text">{top.content}</p>
+                        </div>
+                      ) : (
+                        <div className="lp-qa-answer lp-qa-noanswer">No answers yet — be the first to help.</div>
+                      )}
+                      <button className="lp-qa-viewall" onClick={() => setModalQ(q)}>
+                        View all replies
+                        <span className="material-symbols-outlined">chevron_right</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {visibleQa < qa.length && (
+              <div className="lp-qa-more">
+                <button className="lp-btn-secondary" onClick={() => setVisibleQa(v => v + 5)}>
+                  View more
+                  <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', marginLeft: '0.3rem', verticalAlign: 'middle' }}>expand_more</span>
+                </button>
+              </div>
+            )}
+
+          </div>
+        </section>
+
+        {/* ── Q/A thread modal ── */}
+        {modalQ && (
+          <div className="lp-qa-modal-backdrop" onClick={() => setModalQ(null)}>
+            <div className="lp-qa-modal" onClick={e => e.stopPropagation()}>
+              <button className="lp-qa-modal-close" onClick={() => setModalQ(null)} aria-label="Close">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+              <div className="lp-qa-modal-q">
+                <span className="material-symbols-outlined ms-fill lp-qa-qicon">help</span>
+                <div>
+                  <p className="lp-qa-modal-qtext">{modalQ.content}</p>
+                  <p className="lp-qa-modal-by">
+                    Asked by {modalQ.user?.name || 'Student'} · {modalQ.answers?.length || 0} answer{(modalQ.answers?.length || 0) !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+              <div className="lp-qa-modal-answers">
+                {(modalQ.answers || []).length === 0 ? (
+                  <p className="lp-qa-empty" style={{ padding: '1rem 0' }}>No answers yet. Sign in to be the first to help.</p>
+                ) : modalQ.answers.map(a => (
+                  <div key={a.id} className={`lp-qa-answer ${a.user?.role === 'ADMIN' ? 'is-expert' : ''}`}>
+                    <div className="lp-qa-answer-by">
+                      {a.user?.name || 'User'}{a.user?.role === 'ADMIN' ? ' · Expert' : ''}
+                    </div>
+                    <p className="lp-qa-answer-text lp-qa-answer-full">{a.content}</p>
+                  </div>
+                ))}
+              </div>
+              <button className="lp-cta-btn lp-auth-submit" onClick={goLogin}>
+                <span className="material-symbols-outlined">forum</span> Sign in to reply
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── FINAL CTA ── */}
         <section className="lp-final-cta">

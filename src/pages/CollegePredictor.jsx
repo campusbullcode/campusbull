@@ -231,6 +231,13 @@ export default function CollegePredictor() {
   const handleSearch = async () => {
     if (access.locked) { setLimitError(lockMessage); return }
     if (!rank) { alert('Please enter your NEET rank'); return }
+    // Warn before spending a usage token (admins are unlimited, so no warning).
+    if (!access.unlimited) {
+      const ok = window.confirm(
+        `Heads up — this will use 1 token. You have ${access.left} of ${access.limit} College Predictor run${access.limit !== 1 ? 's' : ''} left. Continue?`
+      )
+      if (!ok) return
+    }
     setLimitError(null)
     setSearched(true)
     setApiLoading(true)
@@ -376,7 +383,7 @@ export default function CollegePredictor() {
           <span className="material-icons" style={{ fontSize: '1rem', color: 'var(--primary)' }}>bolt</span>
           {access.unlimited
             ? <span><strong>Unlimited</strong> college searches (Admin)</span>
-            : <span><strong>{access.left}</strong> of {access.limit} college search{access.limit !== 1 ? 'es' : ''} left</span>}
+            : <span><strong>{access.left}</strong> of {access.limit} college search{access.limit !== 1 ? 'es' : ''} left · each search costs 1 token</span>}
         </div>
       )}
 

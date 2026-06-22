@@ -1,14 +1,15 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { predictorAccess } from '../constants/predictorLimits'
 import campusBullLogo from '../campus-bull-logo.png'
 import './Layout.css'
 
 const navItems = [
   { to: '/dashboard',                      icon: 'dashboard',       label: 'Home'                  },
-  { to: '/dashboard/rank-predictor',       icon: 'insights',        label: 'Rank Predictor'        },
+  { to: '/dashboard/rank-predictor',       icon: 'insights',        label: 'Rank Predictor', tool: 'rank'    },
   { to: '/dashboard/mock-tests',           icon: 'quiz',            label: 'Mock Test'             },
-  { to: '/dashboard/college-predictor',    icon: 'account_balance', label: 'College Predictor'     },
+  { to: '/dashboard/college-predictor',    icon: 'account_balance', label: 'College Predictor', tool: 'college' },
   { to: '/dashboard/profile',              icon: 'manage_accounts', label: 'My Profile'            },
 ]
 
@@ -84,18 +85,23 @@ export default function Layout() {
         </div>
 
         <nav className="sidebar-nav">
-          {navItems.map(item => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/dashboard'}
-              onClick={() => setNavOpen(false)}
-              className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-            >
-              <span className="material-icons">{item.icon}</span>
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
+          {navItems.map(item => {
+            const locked = item.tool ? predictorAccess(user, item.tool).locked : false
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === '/dashboard'}
+                onClick={() => setNavOpen(false)}
+                title={locked ? 'You have used all your runs — upgrade or contact admin' : undefined}
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''} ${locked ? 'locked' : ''}`}
+              >
+                <span className="material-icons">{item.icon}</span>
+                <span>{item.label}</span>
+                {locked && <span className="material-icons nav-lock">lock</span>}
+              </NavLink>
+            )
+          })}
           
           {user?.role === 'ADMIN' && (
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>

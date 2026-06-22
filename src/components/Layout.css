@@ -120,6 +120,23 @@
 
 .nav-item.active .material-icons { color: var(--primary); }
 
+/* Locked predictor tools — dimmed with a lock icon */
+.nav-item.locked {
+  opacity: 0.45;
+}
+.nav-item.locked:hover {
+  opacity: 0.7;
+  background: var(--surface-container);
+}
+.nav-item.locked.active {
+  background: rgba(211, 47, 47, 0.12);
+}
+.nav-item .nav-lock {
+  margin-left: auto;
+  font-size: 1rem !important;
+  color: var(--on-surface-variant);
+}
+
 .sidebar-bottom {
   display: flex;
   flex-direction: column;

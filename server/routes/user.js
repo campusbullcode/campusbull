@@ -132,6 +132,25 @@ router.get('/stats', async (req, res) => {
   }
 })
 
+// POST /api/user/predicted-rank — persist a rank produced by the Rank Predictor
+// onto the user's profile so it sticks. Does NOT consume the manual rank-update
+// allowance (the predictor enforces its own usage limit).
+router.post('/predicted-rank', async (req, res) => {
+  try {
+    const r = Number(req.body.rank)
+    if (!Number.isFinite(r) || r < 1) return res.status(400).json({ error: 'Invalid rank' })
+    const user = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { bestRank: Math.round(r) },
+      select: { bestRank: true },
+    })
+    res.json(user)
+  } catch (err) {
+    console.error('predicted-rank', err)
+    res.status(500).json({ error: 'Failed to save predicted rank' })
+  }
+})
+
 // POST /api/user/record-test — record a (static) paper test attempt into running stats.
 // body: { slug, graded (bool), scorePercent (0-100, only when graded) }
 // Every completion bumps testsTaken; avgScore is the mean over GRADED attempts only,

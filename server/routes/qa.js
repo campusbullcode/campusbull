@@ -4,15 +4,47 @@ import { verifyToken } from '../middleware/auth.js'
 
 const router = express.Router()
 
-// GET /api/qa — list all approved questions (and pending/rejected if admin or owner)
+// GET /api/qa/public — latest Q/A for the public homepage (NO auth required).
+// Returns the most recent non-rejected questions with their answers (admins first).
+router.get('/public', async (req, res) => {
+  try {
+    const take = Math.min(parseInt(req.query.limit) || 6, 20)
+    const questions = await prisma.question.findMany({
+      where: { status: { not: 'REJECTED' } },
+      include: {
+        user: { select: { name: true, role: true } },
+        answers: {
+          include: { user: { select: { name: true, role: true } } },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take,
+    })
+    for (const q of questions) {
+      q.answers.sort((a, b) => {
+        const aAdmin = a.user?.role === 'ADMIN' ? 0 : 1
+        const bAdmin = b.user?.role === 'ADMIN' ? 0 : 1
+        if (aAdmin !== bAdmin) return aAdmin - bAdmin
+        return new Date(a.createdAt) - new Date(b.createdAt)
+      })
+    }
+    res.json(questions)
+  } catch (err) {
+    console.error(err)
+    res.json([])   // homepage should never hard-fail on Q/A
+  }
+})
+
+// GET /api/qa — public Q/A: everyone sees everyone's questions & answers.
+// Admins additionally see REJECTED (hidden) questions; everyone else sees all
+// questions except ones an admin has rejected. Admin answers are sorted to the top.
 router.get('/', verifyToken, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user.userId } })
     const isAdmin = user.role === 'ADMIN'
 
-    const whereClause = isAdmin 
-      ? {} 
-      : { OR: [{ status: 'APPROVED' }, { userId: req.user.userId }] }
+    const whereClause = isAdmin ? {} : { status: { not: 'REJECTED' } }
 
     const questions = await prisma.question.findMany({
       where: whereClause,
@@ -25,6 +57,16 @@ router.get('/', verifyToken, async (req, res) => {
       },
       orderBy: { createdAt: 'desc' }
     })
+
+    // Admin (expert) answers first, then chronological.
+    for (const q of questions) {
+      q.answers.sort((a, b) => {
+        const aAdmin = a.user?.role === 'ADMIN' ? 0 : 1
+        const bAdmin = b.user?.role === 'ADMIN' ? 0 : 1
+        if (aAdmin !== bAdmin) return aAdmin - bAdmin
+        return new Date(a.createdAt) - new Date(b.createdAt)
+      })
+    }
 
     res.json(questions)
   } catch (err) {
@@ -43,7 +85,7 @@ router.post('/question', verifyToken, async (req, res) => {
       data: {
         content,
         userId: req.user.userId,
-        status: 'PENDING'
+        status: 'APPROVED'   // public Q/A — visible to everyone immediately (admins can still reject to hide)
       },
       include: { user: { select: { name: true, role: true } }, answers: true }
     })

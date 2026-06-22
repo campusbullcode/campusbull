@@ -12,7 +12,7 @@ router.use(requireAdmin)
 router.get('/users', async (req, res) => {
   try {
     const users = await prisma.user.findMany({
-      select: { id: true, name: true, email: true, role: true, isPro: true, createdAt: true, bestRank: true, rankUpdates: true },
+      select: { id: true, name: true, email: true, phone: true, role: true, isPro: true, ugOrPg: true, createdAt: true, bestRank: true, rankUpdates: true },
       orderBy: { createdAt: 'desc' }
     })
     res.json(users)

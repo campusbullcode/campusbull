@@ -6,20 +6,17 @@ import './Login.css'
 export default function Login() {
   const { login, register } = useAuth()
   const [isLogin, setIsLogin] = useState(true)
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '' })
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '', ugOrPg: 'UG' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [otpStep, setOtpStep] = useState(false)
-  const [otp, setOtp] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
 
-    if (!isLogin && !otpStep) {
-      // Move to OTP verification step
-      setOtpStep(true)
+    if (!isLogin && (!formData.email.trim() || !formData.phone.trim())) {
+      setError('Email and phone number are required.')
       return
     }
 
@@ -28,11 +25,10 @@ export default function Login() {
       if (isLogin) {
         await login(formData.email, formData.password)
       } else {
-        await register(formData.name, formData.email, formData.password, formData.phone)
+        await register(formData.name, formData.email, formData.password, formData.phone, formData.ugOrPg)
       }
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.')
-      if (!isLogin) setOtpStep(false)
     } finally {
       setLoading(false)
     }
@@ -78,13 +74,13 @@ export default function Login() {
           {/* Auth Module Toggle Navigation */}
           <div className="mb-8 flex bg-surface-container-low p-1 rounded-xl w-fit relative z-20">
             <button
-              onClick={() => { setIsLogin(true); setError(''); setOtpStep(false); setOtp(''); }}
+              onClick={() => { setIsLogin(true); setError(''); }}
               className={`px-8 py-2.5 rounded-lg text-sm font-semibold transition-all ${isLogin ? 'bg-surface-container text-on-surface shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
             >
               Login
             </button>
             <button
-              onClick={() => { setIsLogin(false); setError(''); setOtpStep(false); setOtp(''); }}
+              onClick={() => { setIsLogin(false); setError(''); }}
               className={`px-8 py-2.5 rounded-lg text-sm font-semibold transition-all ${!isLogin ? 'bg-surface-container text-on-surface shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
             >
               Sign Up
@@ -108,43 +104,6 @@ export default function Login() {
               </div>
             )}
 
-            {/* OTP Step */}
-            {otpStep && !isLogin ? (
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                <div className="text-center space-y-2 pb-2">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                    <span className="material-symbols-outlined text-3xl text-primary">sms</span>
-                  </div>
-                  <p className="text-sm text-on-surface-variant">
-                    We've sent a 6-digit OTP to <span className="font-semibold text-on-surface">{formData.phone || formData.email}</span>
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">Enter OTP</label>
-                  <input
-                    className="w-full bg-surface-container-highest border-none rounded-xl py-4 px-4 text-on-surface text-center text-2xl tracking-[0.5em] placeholder:text-on-surface-variant/30 focus:ring-2 focus:ring-primary/40 transition-all outline-none"
-                    placeholder="------"
-                    type="text"
-                    maxLength={6}
-                    value={otp}
-                    onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-                    required
-                    autoFocus
-                  />
-                </div>
-                <button
-                  className="w-full bg-kinetic-gradient py-4 rounded-xl font-headline font-bold text-lg text-white shadow-[0_8px_32px_rgba(211,47,47,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:hover:scale-100"
-                  type="submit"
-                  disabled={loading || otp.length < 6}
-                >
-                  {loading ? 'Verifying...' : 'Verify & Go to Dashboard'}
-                  {!loading && <span className="material-symbols-outlined text-xl">arrow_forward</span>}
-                </button>
-                <button type="button" onClick={() => { setOtpStep(false); setOtp('') }} className="w-full text-sm text-on-surface-variant hover:text-on-surface transition-colors py-2">
-                  ← Back to Sign Up
-                </button>
-              </form>
-            ) : (
             <form className="space-y-6" onSubmit={handleSubmit}>
               {!isLogin && (
                 <div className="space-y-2">
@@ -159,6 +118,24 @@ export default function Login() {
                       onChange={e => setFormData({ ...formData, name: e.target.value })}
                       required={!isLogin}
                     />
+                  </div>
+                </div>
+              )}
+
+              {!isLogin && (
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">I am preparing for</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {['UG', 'PG'].map(opt => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, ugOrPg: opt })}
+                        className={`py-3 rounded-xl text-sm font-semibold border transition-all ${formData.ugOrPg === opt ? 'bg-primary/15 border-primary text-primary' : 'bg-surface-container-highest border-outline-variant/10 text-on-surface-variant hover:text-on-surface'}`}
+                      >
+                        {opt === 'UG' ? 'UG (MBBS/BDS)' : 'PG (MD/MS)'}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
@@ -235,7 +212,6 @@ export default function Login() {
                 {!loading && <span className="material-symbols-outlined text-xl">arrow_forward</span>}
               </button>
             </form>
-            )}
 
             {isLogin && (
               <>

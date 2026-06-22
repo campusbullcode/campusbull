@@ -36,10 +36,10 @@ export const AuthProvider = ({ children }) => {
     await fetchMe()
   }
 
-  const register = async (name, email, password, phone) => {
+  const register = async (name, email, password, phone, ugOrPg) => {
     await apiFetch('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password, ...(phone ? { phone } : {}) })
+      body: JSON.stringify({ name, email, password, ...(phone ? { phone } : {}), ...(ugOrPg ? { ugOrPg } : {}) })
     })
     await login(email, password)
   }

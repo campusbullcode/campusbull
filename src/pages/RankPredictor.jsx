@@ -51,7 +51,7 @@ function buildPath(pts) {
 }
 
 export default function RankPredictor() {
-  const { user } = useAuth()
+  const { user, refetchUser } = useAuth()
   const [, forceTick] = useState(0)   // re-render after a run bumps the stored count
   const access = predictorAccess(user, 'rank')
   const lockMessage = access.tier === 'FREE'
@@ -74,6 +74,13 @@ export default function RankPredictor() {
   const handlePredict = async e => {
     e.preventDefault()
     if (access.locked) { setLimitError(lockMessage); return }
+    // Warn before spending a usage token (admins are unlimited, so no warning).
+    if (!access.unlimited) {
+      const ok = window.confirm(
+        `Heads up — this will use 1 token. You have ${access.left} of ${access.limit} Rank Predictor run${access.limit !== 1 ? 's' : ''} left. Continue?`
+      )
+      if (!ok) return
+    }
     setLimitError(null)
     setApiLoading(true)
     try {
@@ -85,6 +92,13 @@ export default function RankPredictor() {
       setPredicted(true)
       bumpUsed(user, 'rank')          // count this run
       forceTick(t => t + 1)
+      // Persist the predicted rank to the profile so it stays.
+      if (result?.estimatedRank) {
+        apiFetch('/user/predicted-rank', {
+          method: 'POST',
+          body: JSON.stringify({ rank: result.estimatedRank }),
+        }).then(() => refetchUser()).catch(() => {})
+      }
     } catch (err) {
       if (err.status === 403) {
         setLimitError(err.message)
@@ -142,7 +156,7 @@ export default function RankPredictor() {
               <span className="material-icons" style={{ fontSize: '1rem', color: 'var(--primary)' }}>bolt</span>
               {access.unlimited
                 ? <span><strong>Unlimited</strong> predictions (Admin)</span>
-                : <span><strong>{access.left}</strong> of {access.limit} prediction{access.limit !== 1 ? 's' : ''} left{access.tier === 'FREE' ? ' · Upgrade to PRO for 2' : ''}</span>}
+                : <span><strong>{access.left}</strong> of {access.limit} prediction{access.limit !== 1 ? 's' : ''} left · each run costs 1 token{access.tier === 'FREE' ? ' · Upgrade to PRO for 2' : ''}</span>}
             </div>
 
             {limitError && (
