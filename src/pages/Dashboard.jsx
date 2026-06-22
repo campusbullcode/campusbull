@@ -220,7 +220,7 @@ export default function Dashboard() {
             </form>
 
             {/* Q/A threads */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '520px', overflowY: 'auto', paddingRight: '0.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {qaPosts.length === 0 ? (
                 <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', padding: '1rem 0' }}>No questions yet. Be the first to ask!</p>
               ) : qaPosts.map(qa => (
