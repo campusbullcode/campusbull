@@ -7,7 +7,7 @@
 // PRO/ADMIN only) as the real gate.
 
 export const PREDICTOR_LIMITS = {
-  rank:    { ADMIN: Infinity, PRO: 2, FREE: 1 },
+  rank:    { ADMIN: Infinity, PRO: 4, FREE: 2 },
   college: { ADMIN: Infinity, PRO: 1, FREE: 0 },
 }
 

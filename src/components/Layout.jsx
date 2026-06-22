@@ -10,6 +10,7 @@ const navItems = [
   { to: '/dashboard/rank-predictor',       icon: 'insights',        label: 'Rank Predictor', tool: 'rank'    },
   { to: '/dashboard/mock-tests',           icon: 'quiz',            label: 'Mock Test'             },
   { to: '/dashboard/college-predictor',    icon: 'account_balance', label: 'College Predictor', tool: 'college' },
+  { to: '/dashboard/personalized-guide',   icon: 'workspace_premium', label: 'Personalized Guide', premium: true },
   { to: '/dashboard/profile',              icon: 'manage_accounts', label: 'My Profile'            },
 ]
 
@@ -48,8 +49,11 @@ export default function Layout() {
 
   const getInitials = (name) => {
     if (!name) return 'U'
-    const parts = name.split(' ')
-    return parts.length > 1 ? parts[0][0] + parts[1][0] : parts[0][0]
+    const parts = name.trim().split(/\s+/).filter(Boolean)
+    if (!parts.length) return 'U'
+    return parts.length > 1
+      ? parts[0][0].toUpperCase() + parts[1][0].toUpperCase()
+      : parts[0][0].toUpperCase()
   }
 
   return (
@@ -87,18 +91,19 @@ export default function Layout() {
         <nav className="sidebar-nav">
           {navItems.map(item => {
             const locked = item.tool ? predictorAccess(user, item.tool).locked : false
+            const showLock = locked || item.premium
             return (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.to === '/dashboard'}
                 onClick={() => setNavOpen(false)}
-                title={locked ? 'You have used all your runs — upgrade or contact admin' : undefined}
+                title={item.premium ? 'Premium service — view plans' : (locked ? 'You have used all your runs — upgrade or contact admin' : undefined)}
                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''} ${locked ? 'locked' : ''}`}
               >
                 <span className="material-icons">{item.icon}</span>
                 <span>{item.label}</span>
-                {locked && <span className="material-icons nav-lock">lock</span>}
+                {showLock && <span className="material-icons nav-lock">lock</span>}
               </NavLink>
             )
           })}

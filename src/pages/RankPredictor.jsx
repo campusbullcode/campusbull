@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../utils/api'
 import { useAuth } from '../context/AuthContext'
 import { predictorAccess, bumpUsed } from '../constants/predictorLimits'
@@ -52,6 +53,7 @@ function buildPath(pts) {
 
 export default function RankPredictor() {
   const { user, refetchUser } = useAuth()
+  const navigate = useNavigate()
   const [, forceTick] = useState(0)   // re-render after a run bumps the stored count
   const access = predictorAccess(user, 'rank')
   const lockMessage = access.tier === 'FREE'
@@ -156,7 +158,7 @@ export default function RankPredictor() {
               <span className="material-icons" style={{ fontSize: '1rem', color: 'var(--primary)' }}>bolt</span>
               {access.unlimited
                 ? <span><strong>Unlimited</strong> predictions (Admin)</span>
-                : <span><strong>{access.left}</strong> of {access.limit} prediction{access.limit !== 1 ? 's' : ''} left · each run costs 1 token{access.tier === 'FREE' ? ' · Upgrade to PRO for 2' : ''}</span>}
+                : <span><strong>{access.left}</strong> of {access.limit} prediction{access.limit !== 1 ? 's' : ''} left · each run costs 1 token{access.tier === 'FREE' ? ' · Upgrade to PRO for 4' : ''}</span>}
             </div>
 
             {limitError && (
@@ -210,6 +212,18 @@ export default function RankPredictor() {
               {access.locked ? 'Limit Reached' : apiLoading ? 'Predicting…' : 'Predict My Rank'}
             </button>
           </form>
+
+          {/* CTA card always visible in left panel */}
+          <div className="cta-card animate-in" style={{ marginTop: '1.25rem' }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.4rem' }}>Confused with Choice Filling?</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', marginBottom: '1rem' }}>
+              Speak with our expert medical counselors to optimize your preference list for maximum success.
+            </p>
+            <button className="btn-primary" onClick={() => navigate('/dashboard/personalized-guide')}>
+              <span className="material-icons">support_agent</span>
+              Talk to an Expert
+            </button>
+          </div>
 
         </div>
 
@@ -331,16 +345,6 @@ export default function RankPredictor() {
                 </div>
               </div>
 
-              <div className="cta-card animate-in" style={{ textAlign: 'left' }}>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.4rem' }}>Confused with Choice Filling?</h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', marginBottom: '1rem' }}>
-                  Speak with our expert medical counselors to optimize your preference list for maximum success.
-                </p>
-                <button className="btn-primary">
-                  <span className="material-icons">support_agent</span>
-                  Talk to an Expert
-                </button>
-              </div>
             </>
           ) : (
             <div className="empty-state card animate-in">
