@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../utils/api'
 import AnnouncementBanner from '../components/AnnouncementBanner'
@@ -22,6 +22,7 @@ function getGreeting() {
 
 export default function Dashboard() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [stats, setStats] = useState(null)
   const [recentAttempts, setRecentAttempts] = useState([])
   const [tooltip, setTooltip] = useState(null)
@@ -127,9 +128,9 @@ export default function Dashboard() {
   ]
 
   const RECOMMENDATIONS = [
-    { name: 'SDU University Kolar',     rank: '#3 Karnataka',     match: stats?.avgScore > 70 ? 74 : 58, color: '#d32f2f' },
-    { name: 'Aakash Medical College',  rank: '#5 Rajasthan',     match: stats?.avgScore > 80 ? 81 : 60, color: '#f8bd2a' },
-    { name: 'Saptagiri University',    rank: '#6 Karnataka',     match: stats?.avgScore > 65 ? 70 : 52, color: '#4ade80' },
+    { name: 'SDU University Kolar',    location: 'Karnataka' },
+    { name: 'Aakash Medical College',  location: 'Rajasthan' },
+    { name: 'Saptagiri University',    location: 'Karnataka' },
   ]
 
   // Calendar
@@ -231,16 +232,18 @@ export default function Dashboard() {
                     <div>
                       <div className="reco-name">{r.name}</div>
                       <div className="reco-rank">
-                        <span className="material-icons" style={{ fontSize: '0.8rem', color: '#f8bd2a' }}>star</span>
-                        {r.rank}
+                        <span className="material-icons" style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)' }}>location_on</span>
+                        {r.location}
                       </div>
                     </div>
-                    <div className="reco-match" style={{ color: r.color }}>{r.match}%</div>
                   </div>
-                  <div className="progress-bar" style={{ marginTop: '0.75rem' }}>
-                    <div className="progress-fill" style={{ width: `${r.match}%`, background: `linear-gradient(90deg, ${r.color}88, ${r.color})` }} />
-                  </div>
-                  <div className="reco-foot">Match Probability</div>
+                  <button
+                    className="btn-primary"
+                    style={{ marginTop: '0.75rem', width: '100%', justifyContent: 'center', padding: '0.5rem' }}
+                    onClick={() => navigate('/dashboard/personalized-guide')}
+                  >
+                    Apply
+                  </button>
                 </div>
               ))}
             </div>
