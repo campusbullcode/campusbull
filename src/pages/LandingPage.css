@@ -159,10 +159,32 @@
   gap: 1rem;
   flex-wrap: wrap;
   margin-bottom: 2.5rem;
+  align-items: center;
 }
 .lp-hero-btns .lp-cta-btn {
   padding: 1rem 2rem;
   font-size: 1rem;
+}
+
+/* Q/A anchor button */
+.lp-btn-qa {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  border: 1.5px solid rgba(248,189,42,0.5);
+  color: #f8bd2a;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  background: rgba(248,189,42,0.07);
+  transition: background 0.2s, border-color 0.2s;
+}
+.lp-btn-qa:hover {
+  background: rgba(248,189,42,0.15);
+  border-color: #f8bd2a;
 }
 .lp-btn-secondary {
   padding: 1rem 2rem;
@@ -1060,6 +1082,57 @@
 .lp-footer-links a:hover { color: #d32f2f; }
 
 /* ==============================
+   FAQ SECTION
+   ============================== */
+.lp-faq {
+  padding: 6rem 2rem;
+  background: linear-gradient(180deg, #0e0e0f 0%, #131314 100%);
+}
+.lp-faq-inner {
+  max-width: 860px;
+  margin: 0 auto;
+}
+.lp-faq-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.lp-faq-item {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.lp-faq-item:last-child { border-bottom: none; }
+.lp-faq-item.open { background: rgba(211,47,47,0.04); }
+.lp-faq-q {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: none;
+  border: none;
+  text-align: left;
+  color: var(--on-surface, #e5e2e3);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.lp-faq-q:hover { background: rgba(255,255,255,0.03); }
+.lp-faq-icon { font-size: 1.2rem !important; color: #d32f2f; flex-shrink: 0; }
+.lp-faq-a {
+  padding: 0 1.5rem 1.25rem;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: rgba(229,226,227,0.7);
+  margin: 0;
+}
+
+/* ==============================
    MATERIAL SYMBOLS HELPER
    ============================== */
 .material-symbols-outlined {
@@ -1099,4 +1172,15 @@
   .lp-nav-links { display: none; }
   .lp-hero { padding: 7rem 1.25rem 5rem; }
   .lp-features, .lp-how, .lp-value, .lp-final-cta { padding: 4rem 1.25rem; }
+
+  /* Hero buttons: Login + Predictor share first row; Q/A full-width second row */
+  .lp-hero-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0.75rem;
+  }
+  .lp-btn-login    { grid-column: 1; grid-row: 1; padding: 0.875rem 0.75rem; font-size: 0.9rem; justify-content: center; }
+  .lp-btn-predictor { grid-column: 2; grid-row: 1; justify-content: center; text-align: center; }
+  .lp-btn-qa       { grid-column: 1 / -1; grid-row: 2; justify-content: center; }
 }

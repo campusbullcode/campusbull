@@ -126,6 +126,20 @@ const MiniChart = () => (
   </svg>
 )
 
+/* ── FAQ accordion item ── */
+function FaqItem({ q, a }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className={`lp-faq-item ${open ? 'open' : ''}`}>
+      <button className="lp-faq-q" onClick={() => setOpen(o => !o)} aria-expanded={open}>
+        <span>{q}</span>
+        <span className="material-symbols-outlined lp-faq-icon">{open ? 'remove' : 'add'}</span>
+      </button>
+      {open && <p className="lp-faq-a">{a}</p>}
+    </div>
+  )
+}
+
 /* ══════════════════════════════════════════
    MAIN COMPONENT
    ══════════════════════════════════════════ */
@@ -178,6 +192,7 @@ export default function LandingPage() {
             <li><a href="#how">How it Works</a></li>
             <li><a href="#why">Why Us</a></li>
             <li><a href="#qa">Q/A</a></li>
+            <li><a href="#faq">FAQ</a></li>
           </ul>
           <button className="lp-cta-btn lp-nav-cta" onClick={goLogin}>
             Login / Sign Up
@@ -209,12 +224,16 @@ export default function LandingPage() {
               </p>
 
               <div className="lp-hero-btns">
-                <button className="lp-cta-btn" onClick={goLogin} style={{ padding: '1rem 2rem', fontSize: '1rem' }}>
+                <button className="lp-cta-btn lp-btn-login" onClick={goLogin}>
                   Login / Sign Up
                 </button>
-                <button className="lp-btn-secondary" onClick={goLogin}>
+                <button className="lp-btn-secondary lp-btn-predictor" onClick={goLogin}>
                   Try Predictor
                 </button>
+                <a className="lp-btn-qa" href="#qa">
+                  <span className="material-symbols-outlined" style={{ fontSize: '1rem', verticalAlign: 'middle' }}>forum</span>
+                  Q/A
+                </a>
               </div>
 
               <div className="lp-social-proof">
@@ -616,6 +635,54 @@ export default function LandingPage() {
             </div>
           </div>
         )}
+
+        {/* ── FAQ ── */}
+        <section className="lp-faq" id="faq" aria-label="Frequently Asked Questions about NEET counselling and rank prediction">
+          <div className="lp-faq-inner">
+            <div className="lp-section-head">
+              <h2>Frequently Asked Questions</h2>
+              <p>Everything you need to know about NEET rank prediction, MCC counselling, and medical college admissions in India.</p>
+            </div>
+            <div className="lp-faq-grid">
+              {[
+                {
+                  q: 'How is NEET rank calculated from marks?',
+                  a: 'NEET rank is assigned based on your raw score out of 720 — higher scores get lower (better) rank numbers. Campus Bull\'s rank predictor uses 2023-24 counselling cut-off data to estimate your All India Rank instantly. Tie-breaking uses Biology score, then Chemistry score, then fewer incorrect answers.',
+                },
+                {
+                  q: 'What NEET score is required for a government MBBS seat?',
+                  a: 'For AIQ (All India Quota) government MBBS seats in 2024, General category candidates needed 650+ marks (AIR within ~15,000). State quota government seats are more accessible — typically 530–600+ marks depending on the state. SC/ST/OBC candidates have lower cut-offs due to reservation.',
+                },
+                {
+                  q: 'What is the difference between AIQ and state quota?',
+                  a: 'AIQ (15% of government seats) is managed by MCC and is open to candidates from any state. State quota (85% of seats) is managed by each state and is reserved for domicile candidates. AIQ seats generally have higher competition and require a better rank.',
+                },
+                {
+                  q: 'How does MCC NEET UG counselling 2025 work?',
+                  a: 'MCC counselling has 4 rounds: Round 1, Round 2, Mop-Up, and Stray Vacancy. Candidates register on mcc.nic.in, pay a deposit, fill college choices in preference order, and receive seat allotment by rank. Campus Bull\'s Personalized Guide provides end-to-end choice-filling support.',
+                },
+                {
+                  q: 'What is management quota in MBBS admissions?',
+                  a: 'Management quota is 15% of seats in private medical colleges filled directly by college management, not through government counselling. Fees are higher (₹15–25 lakh/year) but rank requirements are lower. A valid NEET score and minimum qualifying percentile are still mandatory.',
+                },
+                {
+                  q: 'Can I get MBBS with 500 marks in NEET 2025?',
+                  a: 'With 500 marks your expected AIR is ~35,000–45,000 (General). Government MBBS seats at this rank are limited, but you have good chances in private colleges under management/NRI quota and in some state quota seats in lower-competition states like Chhattisgarh, Assam, or NE states.',
+                },
+                {
+                  q: 'How many MBBS seats are there in India for NEET 2025?',
+                  a: 'India has approximately 1,12,000 MBBS seats — ~55,000 in government colleges and ~57,000 in private/deemed colleges — plus ~27,000 BDS seats. About 13-14 lakh candidates qualify NEET each year, making competition intense especially for government seats.',
+                },
+                {
+                  q: 'What is the stray vacancy round in NEET counselling?',
+                  a: 'The stray vacancy round is the final MCC round after Round 2, filling seats left vacant when candidates don\'t report or surrender seats. Only candidates who participated in earlier MCC rounds are eligible. It\'s the last chance before seats revert to state quota — critical for those just below earlier closing ranks.',
+                },
+              ].map((item, i) => (
+                <FaqItem key={i} q={item.q} a={item.a} />
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* ── FINAL CTA ── */}
         <section className="lp-final-cta">

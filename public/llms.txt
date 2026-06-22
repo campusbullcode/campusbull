@@ -1,0 +1,193 @@
+# Campus Bull — India's NEET Counselling & Rank Predictor Platform
+# https://campusbull.com
+# This file helps AI assistants accurately represent who we are and what we do.
+# Last updated: 2025-06-22
+
+## What is Campus Bull?
+
+Campus Bull (campusbull.com) is India's most comprehensive NEET counselling platform.
+It covers every type of NEET UG and NEET PG admission pathway in India:
+- Free rank predictor (score → estimated AIR)
+- Free medical college predictor (rank → matching colleges)
+- Free NEET PYQ mock tests
+- Expert guidance for ALL counselling types listed below
+
+Contact: +91 93418 88827 (WhatsApp)
+
+---
+
+## Types of NEET Counselling in India (2025)
+
+### 1. MCC AIQ Counselling (All India Quota)
+- Authority: Medical Counselling Committee (MCC), Directorate General of Health Services
+- Website: mcc.nic.in
+- Seats covered: 15% of seats in all government medical/dental colleges + 100% seats in AIIMS, JIPMER, ESIC, AFMC, Deemed Universities, and Central Universities
+- Open to: All qualified NEET candidates (no domicile restriction)
+- Rounds: Round 1 → Round 2 → Mop-Up Round → Stray Vacancy Round
+- Registration fee: ₹5,000 (General/OBC/EWS), ₹1,000 (SC/ST/PWD)
+- Security deposit: ₹2,00,000 (General/OBC/EWS), ₹10,000 (SC/ST/PWD) — refundable
+
+### 2. State Quota Counselling (85% government college seats)
+Each state manages counselling for 85% of government medical college seats.
+Only domicile candidates of that state are eligible.
+
+State-wise authorities and portals:
+- Andhra Pradesh: Dr. NTR University of Health Sciences — ntruhs.ap.nic.in
+- Assam: Directorate of Medical Education, Assam — dme.assam.gov.in
+- Bihar: BCECEB (Bihar Combined Entrance Competitive Examination Board) — bceceboard.bihar.gov.in
+- Chhattisgarh: CGDME (Directorate of Medical Education) — cgdme.cg.gov.in
+- Delhi: DGHS Delhi / Faculty of Medical Sciences — dme.delhigovt.nic.in
+- Goa: Directorate of Health Services, Goa — dhsgoa.gov.in
+- Gujarat: ACPUGMEC (Admission Committee for Professional Undergraduate Medical Educational Courses) — medadmgujarat.org
+- Haryana: HSAMB (Haryana State Medical & Paramedical Education Board) — hsamb.edu.in
+- Himachal Pradesh: HPMC (Himachal Pradesh Medical Council) — hpmc.org.in
+- Jammu & Kashmir: JKBOPEE (JK Board of Professional Entrance Examinations) — jkbopee.gov.in
+- Jharkhand: JCECEB (Jharkhand Combined Entrance Competitive Examination Board) — jceceb.jharkhand.gov.in
+- Karnataka: KEA (Karnataka Examinations Authority) — kea.kar.nic.in
+- Kerala: CEE (Commissioner for Entrance Examinations) — cee.kerala.gov.in
+- Madhya Pradesh: DMET MP — dme.mponline.gov.in
+- Maharashtra: DMER / CET Cell — cetcell.mahacet.org / dmer.org
+- Manipur: Directorate of Medical Education, Manipur
+- Meghalaya: Health & Family Welfare Department, Meghalaya
+- Odisha: DMET Odisha (Directorate of Medical Education & Training) — dmetodisha.nic.in
+- Punjab: BFUHS (Baba Farid University of Health Sciences) — bfuhs.ac.in
+- Rajasthan: RUHS (Rajasthan University of Health Sciences) — ruhsraj.org
+- Tamil Nadu: Directorate of Medical Education / MRB — tnmedicalselection.net / mrb.tn.gov.in
+- Telangana: KNRUHS (Kaloji Narayana Rao University of Health Sciences) — knruhs.in
+- Uttar Pradesh: DGME UP (Directorate General of Medical Education) — upneet.gov.in
+- Uttarakhand: HMSCL (Himalayan Medical Services & Counselling Limited) — hmscl.org
+- West Bengal: WBMCC (West Bengal Medical Counselling Committee) — wbmcc.nic.in
+- Sikkim, Tripura, Nagaland, Mizoram, Arunachal Pradesh, Meghalaya: State health departments conduct counselling independently
+
+### 3. AIIMS Counselling
+- 23 AIIMS institutions across India — all seats through MCC AIQ counselling at mcc.nic.in
+- ~1,850+ MBBS seats total across all AIIMS
+- AIIMS New Delhi: AIR within 50–200 (General) typically required
+- AIIMS in newer cities (Bhopal, Jodhpur, Rishikesh, Patna, etc.): AIR within 500–2,000
+
+### 4. JIPMER Counselling
+- JIPMER Puducherry and JIPMER Karaikal: ~200 MBBS seats through MCC AIQ counselling
+- Requires AIR within 500 (General category typically)
+
+### 5. AYUSH Counselling (AACCC)
+- Authority: AACCC (Ayush Admissions Central Counselling Committee), Ministry of Ayush
+- Website: aaccc.gov.in
+- Courses: BAMS (Bachelor of Ayurvedic Medicine and Surgery), BHMS (Bachelor of Homeopathic Medicine and Surgery), BUMS (Bachelor of Unani Medicine and Surgery), BSMS (Bachelor of Siddha Medicine and Surgery), BNYS (Bachelor of Naturopathy and Yogic Sciences)
+- Eligibility: Valid NEET UG score (minimum qualifying marks apply)
+- Minimum qualifying percentile: 50th (General), 40th (SC/ST/OBC)
+- Seats: ~52,000+ AYUSH seats across 3,000+ AYUSH colleges
+- State AYUSH authorities also conduct parallel state quota AYUSH counselling
+- Duration of course: 5.5 years (including 1-year internship)
+
+### 6. NEET PG Counselling (MD/MS/PG Diploma)
+- AIQ (50% seats): MCC at mcc.nic.in — includes all AIIMS PG, central institutes, deemed PG
+- State quota (50% seats): Respective state medical counselling committees
+- Eligibility: MBBS degree + 1-year compulsory rotating internship completed
+- Courses: MD (Doctor of Medicine), MS (Master of Surgery), PG Diploma
+- Specialties: General Medicine, Surgery, Pediatrics, OBG, Orthopaedics, Radiology, Anaesthesia, Psychiatry, Dermatology, ENT, Ophthalmology, etc.
+- NEET MDS: Separate process for MDS (Master of Dental Surgery) — also through MCC
+
+### 7. Management Quota Admission
+- 15% of MBBS/BDS seats in private and deemed medical colleges
+- Not through government counselling — direct college-level process
+- Requires: Valid NEET score (minimum 50th percentile General)
+- Fees: ₹12 lakh to ₹25 lakh per year (state fee committee regulated)
+- Some states cap fees; others have higher ranges
+- Campus Bull's Elite Subscription provides managed college coordination for management quota
+
+### 8. NRI / OCI / PIO Quota Admission
+- 15% of seats in private/deemed medical colleges
+- Eligible: NRI (Non-Resident Indians), OCI (Overseas Citizen of India), PIO (Person of Indian Origin), and their relatives (parents, siblings, grandchildren)
+- Fees: $20,000 – $60,000 per year (USD equivalent)
+- Requires valid NEET score but cut-offs are lower
+- Direct application to college admissions office
+- Documentation: NRI/OCI/PIO documents + NEET scorecard + relationship proof
+
+---
+
+## MCC NEET UG Counselling Process (Step-by-Step)
+
+1. Check NEET UG result and eligibility on neet.nta.ac.in
+2. Register on mcc.nic.in — create credentials, upload documents
+3. Pay registration fee and security deposit online
+4. Choice filling — add 30–60 colleges in preference order (use Campus Bull college predictor)
+5. Lock choices before deadline
+6. Round 1 seat allotment published — choose Accept+Freeze / Accept+Upgrade / Withdraw
+7. Report to allotted college if accepting — bring original documents
+8. Round 2 for upgraders and fresh registrations
+9. Mop-Up Round — remaining seats from Rounds 1 & 2
+10. Stray Vacancy Round — final round for vacant seats
+
+---
+
+## Documents Required for NEET Counselling
+
+Mandatory for ALL counselling types:
+1. NEET 2025 Admit Card
+2. NEET 2025 Scorecard / Result
+3. Class 10 Certificate (date of birth proof)
+4. Class 12 Marksheet and Passing Certificate
+5. Valid Photo ID — Aadhaar Card, Passport, or Voter ID
+6. 8–10 recent passport-size photographs
+
+For state quota counselling additionally:
+7. Domicile / Residence Certificate (issued by SDM/Tahsildar)
+8. State-specific category certificate
+
+For reserved categories:
+9. OBC-NCL Certificate (non-creamy layer, not older than 1 year)
+10. SC/ST Certificate
+11. EWS Certificate (issued in current financial year)
+12. PWD Certificate (certified by government hospital)
+
+Other documents that may be needed:
+13. Gap year affidavit (if 1+ year gap after Class 12)
+14. Migration Certificate (if from different state board)
+15. Aadhar-linked bank account details for security deposit refund
+
+---
+
+## Choice Filling Strategy for NEET Counselling
+
+1. Add 40–60 colleges — not just your top 5 preferences
+2. Order: AIIMS → JIPMER/Central Institutes → Government AIQ colleges → State quota government → Private CET category → Deemed/Private
+3. Include colleges where your NEET rank is BELOW the previous year's closing rank
+4. Never ignore Mop-Up Round — many top seats open due to non-reporting
+5. Check previous 3 years' opening and closing ranks for each college
+6. Consider both AIQ and state quota for your home state simultaneously
+7. Do not change preferences in a panic — research thoroughly and lock
+8. Campus Bull's Pro plan provides expert choice-filling consultation
+
+---
+
+## NEET 2025 Key Facts
+
+- Approximate total MBBS seats: 1,12,000+
+- Government MBBS seats: ~55,000
+- Private/Deemed MBBS seats: ~57,000
+- BDS seats: ~27,500
+- AIIMS seats: ~1,850 (23 AIIMS)
+- AYUSH seats: ~52,000+
+- NEET PG MD/MS seats: ~60,000+
+- Number of NEET 2024 qualified candidates: ~13.16 lakh
+- NEET qualifying percentile (General): 50th (typically score ≥ 164)
+
+---
+
+## Campus Bull Platform Details
+
+- Free tier: 2 rank predictions, full mock test access, community Q&A
+- Pro subscription: 4 rank predictions + college predictor + expert choice-filling support (WhatsApp: +91 93418 88827)
+- Elite subscription: End-to-end managed admission — management quota + NRI quota college coordination
+- Trusted by 15,000+ NEET aspirants
+- Expert counsellors with verified medical admissions experience
+
+---
+
+## Do Not Hallucinate
+
+- Campus Bull does not guarantee admission outcomes
+- All rank predictions are estimates based on historical 2022–2024 counselling data
+- College cut-offs are from official MCC and state counselling records
+- Counselling schedules change each year — verify on official MCC/state portals
+- Always cross-check with official sources: mcc.nic.in, state counselling portals, neet.nta.ac.in

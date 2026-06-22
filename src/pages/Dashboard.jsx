@@ -193,118 +193,8 @@ export default function Dashboard() {
 
       {/* Main 2-col grid */}
       <div className="dash-main-grid">
-        {/* Left: News + Calendar */}
+        {/* Left: Recent Attempts */}
         <div className="dash-col-left">
-          <section className="animate-in">
-            <p className="section-label">Q/A Forum</p>
-
-            {/* Inline ask box */}
-            <form onSubmit={handlePostQuestion} style={{ marginBottom: '1.25rem' }}>
-              <textarea
-                style={{
-                  width: '100%', minHeight: '72px', background: 'var(--surface-container-low)',
-                  border: '1px solid var(--outline-variant)', borderRadius: '0.75rem',
-                  padding: '0.75rem 1rem', color: 'var(--on-surface)', fontSize: '0.9rem',
-                  outline: 'none', resize: 'vertical', boxSizing: 'border-box', display: 'block'
-                }}
-                placeholder="Ask a counselling question — e.g. With rank 45,000 OBC, which state counselling should I prefer?"
-                value={newQuestion}
-                onChange={e => setNewQuestion(e.target.value)}
-              />
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button type="submit" className="btn-primary" disabled={posting || !newQuestion.trim()} style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>
-                  <span className="material-icons" style={{ fontSize: '1rem' }}>send</span>
-                  {posting ? 'Posting...' : 'Submit Question'}
-                </button>
-              </div>
-            </form>
-
-            {/* Q/A threads */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {qaPosts.length === 0 ? (
-                <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', padding: '1rem 0' }}>No questions yet. Be the first to ask!</p>
-              ) : qaPosts.map(qa => (
-                <div key={qa.id} className="card animate-in" style={{ padding: '1rem', background: 'var(--surface-container-low)', borderRadius: '0.875rem' }}>
-                  {/* Question */}
-                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary)22', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <span className="material-icons" style={{ fontSize: '1rem', color: 'var(--primary)' }}>help_outline</span>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>
-                        {qa.user?.name || 'Student'} · {new Date(qa.createdAt).toLocaleDateString()}
-                        {qa.status === 'PENDING' && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', color: '#f8bd2a', background: '#f8bd2a15', padding: '0.1rem 0.4rem', borderRadius: '1rem' }}>Pending</span>}
-                      </div>
-                      <p style={{ fontSize: '0.92rem', fontWeight: 600, lineHeight: 1.45, color: 'var(--on-surface)' }}>{qa.content}</p>
-                    </div>
-                  </div>
-
-                  {/* Answers chain */}
-                  {qa.answers && qa.answers.length > 0 && (
-                    <div style={{ marginTop: '0.75rem', marginLeft: '2.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {qa.answers.map(ans => (
-                        <div key={ans.id} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
-                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: ans.user?.role === 'ADMIN' ? '#4ade8022' : 'var(--surface-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <span className="material-icons" style={{ fontSize: '0.85rem', color: ans.user?.role === 'ADMIN' ? '#4ade80' : 'var(--on-surface-variant)' }}>
-                              {ans.user?.role === 'ADMIN' ? 'verified' : 'person'}
-                            </span>
-                          </div>
-                          <div style={{ flex: 1, background: ans.user?.role === 'ADMIN' ? '#4ade8010' : 'var(--surface-container-highest)', borderRadius: '0.5rem', padding: '0.6rem 0.75rem', borderLeft: ans.user?.role === 'ADMIN' ? '3px solid #4ade80' : '3px solid var(--outline-variant)' }}>
-                            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: ans.user?.role === 'ADMIN' ? '#4ade80' : 'var(--on-surface-variant)', marginBottom: '0.2rem' }}>
-                              {ans.user?.name || 'User'}{ans.user?.role === 'ADMIN' ? ' · Expert' : ''}
-                            </div>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--on-surface)', lineHeight: 1.5 }}>{ans.content}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Reply toggle */}
-                  <div style={{ marginTop: '0.75rem', marginLeft: '2.75rem' }}>
-                    {replyingTo === qa.id ? (
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-                        <textarea
-                          style={{
-                            flex: 1, minHeight: '56px', background: 'var(--surface-container-highest)',
-                            border: '1px solid var(--outline-variant)', borderRadius: '0.5rem',
-                            padding: '0.5rem 0.75rem', color: 'var(--on-surface)', fontSize: '0.85rem',
-                            outline: 'none', resize: 'none', boxSizing: 'border-box'
-                          }}
-                          placeholder="Write your answer..."
-                          value={replyInputs[qa.id] || ''}
-                          onChange={e => setReplyInputs(prev => ({ ...prev, [qa.id]: e.target.value }))}
-                        />
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                          <button
-                            className="btn-primary"
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                            onClick={() => handlePostReply(qa.id)}
-                            disabled={postingReply || !replyInputs[qa.id]?.trim()}
-                          >
-                            {postingReply ? '...' : 'Post'}
-                          </button>
-                          <button
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}
-                            onClick={() => setReplyingTo(null)}
-                          >Cancel</button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.78rem', color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: 0 }}
-                        onClick={() => setReplyingTo(qa.id)}
-                      >
-                        <span className="material-icons" style={{ fontSize: '0.9rem' }}>reply</span>
-                        Reply
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
           {/* Recent Attempts */}
           {recentAttempts.length > 0 && (
             <section className="animate-in" style={{ marginTop: '1.75rem' }}>
@@ -419,6 +309,104 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Q/A Forum — full-width, always last on mobile */}
+      <section className="animate-in" style={{ marginTop: '2rem' }}>
+        <p className="section-label">Q/A Forum</p>
+
+        <form onSubmit={handlePostQuestion} style={{ marginBottom: '1.25rem' }}>
+          <textarea
+            style={{
+              width: '100%', minHeight: '72px', background: 'var(--surface-container-low)',
+              border: '1px solid var(--outline-variant)', borderRadius: '0.75rem',
+              padding: '0.75rem 1rem', color: 'var(--on-surface)', fontSize: '0.9rem',
+              outline: 'none', resize: 'vertical', boxSizing: 'border-box', display: 'block'
+            }}
+            placeholder="Ask a counselling question — e.g. With rank 45,000 OBC, which state counselling should I prefer?"
+            value={newQuestion}
+            onChange={e => setNewQuestion(e.target.value)}
+          />
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            <button type="submit" className="btn-primary" disabled={posting || !newQuestion.trim()} style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>
+              <span className="material-icons" style={{ fontSize: '1rem' }}>send</span>
+              {posting ? 'Posting...' : 'Submit Question'}
+            </button>
+          </div>
+        </form>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {qaPosts.length === 0 ? (
+            <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', padding: '1rem 0' }}>No questions yet. Be the first to ask!</p>
+          ) : qaPosts.map(qa => (
+            <div key={qa.id} className="card animate-in" style={{ padding: '1rem', background: 'var(--surface-container-low)', borderRadius: '0.875rem' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary)22', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span className="material-icons" style={{ fontSize: '1rem', color: 'var(--primary)' }}>help_outline</span>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>
+                    {qa.user?.name || 'Student'} · {new Date(qa.createdAt).toLocaleDateString()}
+                    {qa.status === 'PENDING' && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', color: '#f8bd2a', background: '#f8bd2a15', padding: '0.1rem 0.4rem', borderRadius: '1rem' }}>Pending</span>}
+                  </div>
+                  <p style={{ fontSize: '0.92rem', fontWeight: 600, lineHeight: 1.45, color: 'var(--on-surface)' }}>{qa.content}</p>
+                </div>
+              </div>
+
+              {qa.answers && qa.answers.length > 0 && (
+                <div style={{ marginTop: '0.75rem', marginLeft: '2.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {qa.answers.map(ans => (
+                    <div key={ans.id} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+                      <div style={{ width: 26, height: 26, borderRadius: '50%', background: ans.user?.role === 'ADMIN' ? '#4ade8022' : 'var(--surface-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <span className="material-icons" style={{ fontSize: '0.85rem', color: ans.user?.role === 'ADMIN' ? '#4ade80' : 'var(--on-surface-variant)' }}>
+                          {ans.user?.role === 'ADMIN' ? 'verified' : 'person'}
+                        </span>
+                      </div>
+                      <div style={{ flex: 1, background: ans.user?.role === 'ADMIN' ? '#4ade8010' : 'var(--surface-container-highest)', borderRadius: '0.5rem', padding: '0.6rem 0.75rem', borderLeft: ans.user?.role === 'ADMIN' ? '3px solid #4ade80' : '3px solid var(--outline-variant)' }}>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: ans.user?.role === 'ADMIN' ? '#4ade80' : 'var(--on-surface-variant)', marginBottom: '0.2rem' }}>
+                          {ans.user?.name || 'User'}{ans.user?.role === 'ADMIN' ? ' · Expert' : ''}
+                        </div>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--on-surface)', lineHeight: 1.5 }}>{ans.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ marginTop: '0.75rem', marginLeft: '2.75rem' }}>
+                {replyingTo === qa.id ? (
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                    <textarea
+                      style={{
+                        flex: 1, minHeight: '56px', background: 'var(--surface-container-highest)',
+                        border: '1px solid var(--outline-variant)', borderRadius: '0.5rem',
+                        padding: '0.5rem 0.75rem', color: 'var(--on-surface)', fontSize: '0.85rem',
+                        outline: 'none', resize: 'none', boxSizing: 'border-box'
+                      }}
+                      placeholder="Write your answer..."
+                      value={replyInputs[qa.id] || ''}
+                      onChange={e => setReplyInputs(prev => ({ ...prev, [qa.id]: e.target.value }))}
+                    />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                      <button className="btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                        onClick={() => handlePostReply(qa.id)} disabled={postingReply || !replyInputs[qa.id]?.trim()}>
+                        {postingReply ? '...' : 'Post'}
+                      </button>
+                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}
+                        onClick={() => setReplyingTo(null)}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.78rem', color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: 0 }}
+                    onClick={() => setReplyingTo(qa.id)}>
+                    <span className="material-icons" style={{ fontSize: '0.9rem' }}>reply</span>
+                    Reply
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Calendar Tooltip */}
       {tooltip && (

@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Block crawling of dashboard/auth pages (no SEO value, heavy JS)
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /login
+
+# Sitemaps
+Sitemap: https://campusbull.com/sitemap.xml
