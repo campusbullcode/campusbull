@@ -89,7 +89,7 @@ export default function AdminOverview({ onNavigate }) {
   return (
     <>
       {/* TopNavBar */}
-      <header className="sticky top-0 z-40 bg-[#131314]/80 backdrop-blur-md h-20 flex justify-between items-center px-10 w-full font-['Space_Grotesk'] font-medium border-b border-white/5">
+      <header className="sticky top-0 z-40 bg-[#131314]/80 backdrop-blur-md h-16 flex justify-between items-center px-4 md:px-8 w-full font-['Space_Grotesk'] font-medium border-b border-white/5">
         <div>
           <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest">Admin Console</p>
           <h1 className="text-white font-bold text-lg leading-tight">Dashboard</h1>
@@ -99,14 +99,14 @@ export default function AdminOverview({ onNavigate }) {
             <p className="text-white font-bold text-sm">{timeStr}</p>
             <p className="text-zinc-500 text-xs">{dateStr}</p>
           </div>
-          <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
+          <div className="hidden sm:flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
             <span className="text-emerald-400 text-xs font-bold">System Operational</span>
           </div>
         </div>
       </header>
 
-      <div className="p-8 overflow-y-auto h-[calc(100vh-80px)] space-y-10">
+      <div className="px-4 md:px-8 py-6 overflow-y-auto h-[calc(100vh-64px)] space-y-8">
 
         {/* KPI Strip */}
         <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
