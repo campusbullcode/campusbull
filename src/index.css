@@ -69,6 +69,22 @@ a { text-decoration: none; color: inherit; }
 button { cursor: pointer; border: none; outline: none; }
 input, textarea, select { outline: none; border: none; }
 
+/* Kill the browser autofill light-blue/yellow background & font on dark inputs.
+   The big inset box-shadow masks the autofill bg; text-fill keeps text light. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--on-surface, #fff) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--surface-low) inset !important;
+  box-shadow: 0 0 0 1000px var(--surface-low) inset !important;
+  caret-color: var(--on-surface, #fff);
+  font-family: var(--font-body) !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--surface-low); }
