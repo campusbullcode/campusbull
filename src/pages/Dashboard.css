@@ -57,8 +57,15 @@
 .dash-main-grid {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "left  right"
+    "qa    right";
   gap: 2rem;
 }
+.dash-col-left { grid-area: left; }
+.dash-col-right { grid-area: right; }
+.dash-col-qa   { grid-area: qa; }
 
 /* Section label row */
 .section-row {
@@ -252,7 +259,8 @@
 
 /* Right column */
 .dash-col-right { display: flex; flex-direction: column; gap: 1.5rem; }
-.dash-col-left { display: flex; flex-direction: column; }
+.dash-col-left  { display: flex; flex-direction: column; }
+.dash-col-qa    { display: flex; flex-direction: column; }
 
 /* Recommendation cards */
 .reco-list { display: flex; flex-direction: column; gap: 0.75rem; }
@@ -324,5 +332,12 @@
 .quick-item:hover { background: var(--surface-bright); color: var(--on-surface); transform: translateY(-2px); }
 
 @media (max-width: 1100px) {
-  .dash-main-grid { grid-template-columns: 1fr; }
+  .dash-main-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    grid-template-areas:
+      "left"
+      "right"
+      "qa";
+  }
 }

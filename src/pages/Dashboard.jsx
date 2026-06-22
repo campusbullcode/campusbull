@@ -311,10 +311,10 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Q/A Forum — full-width, always last on mobile */}
-      <section className="animate-in" style={{ marginTop: '2rem' }}>
+        {/* Q/A Forum — left column on desktop, last on mobile */}
+        <div className="dash-col-qa">
+        <section className="animate-in">
         <p className="section-label">Q/A Forum</p>
 
         <form onSubmit={handlePostQuestion} style={{ marginBottom: '1.25rem' }}>
@@ -410,6 +410,8 @@ export default function Dashboard() {
           ))}
         </div>
       </section>
+      </div>
+      </div>
 
       {/* Calendar Tooltip */}
       {tooltip && (
