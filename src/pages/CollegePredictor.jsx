@@ -91,15 +91,16 @@ const CATEGORY_MAPPING = {
     "AFMS": ["AFMS0Priority III", "AFMS0Priority IV"]
   },
   "karnatakas": {
-    "GEN": ["GM", "GMH", "GMK", "GMKH", "GMR", "GMRH", "OPEN", "OPEN-GEN", "OPEN-FEM", "OPN"],
-    "OBC": ["1G", "1H", "1K", "1KH", "1R", "1RH", "2AG", "2AH", "2AK", "2AKH", "2AR", "2ARH", "2BG", "2BH", "2BK", "2BKH", "2BR", "2BRH", "3AG", "3AH", "3AK", "3AKH", "3AR", "3ARH", "3BG", "3BH", "3BK", "3BKH", "3BR", "3BRH"],
-    "SC": ["SCG", "SCH", "SCK", "SCKH", "SCR", "SCRH"],
-    "ST": ["STG", "STH", "STK", "STKH", "STR", "STRH"],
+    "GEN": ["GEN", "OPEN", "UR", "GM", "GMH", "GMK", "GMKH", "GMR", "GMRH", "OPEN-GEN", "OPEN-FEM", "OPN"],
+    "OBC": ["OBC", "1G", "1H", "1K", "1KH", "1R", "1RH", "2AG", "2AH", "2AK", "2AKH", "2AR", "2ARH", "2BG", "2BH", "2BK", "2BKH", "2BR", "2BRH", "3AG", "3AH", "3AK", "3AKH", "3AR", "3ARH", "3BG", "3BH", "3BK", "3BKH", "3BR", "3BRH"],
+    "SC": ["SC", "SCG", "SCH", "SCK", "SCKH", "SCR", "SCRH"],
+    "ST": ["ST", "STG", "STH", "STK", "STKH", "STR", "STRH"],
+    "EWS": ["EWS"],
     "MANAGEMENT/NRI": ["GMP", "GMPH", "NRI"]
   },
   "andhra_pradeshes": {
-    "GEN": ["OC", "OC Open", "OC Serv", "OPEN", "OPEN-GEN", "OPEN-FEM", "OP", "Open"],
-    "OBC/BC": ["BC", "BC Open", "BC Serv", "BC Service", "BCA-GEN", "BCB-GEN", "BCC-GEN", "BCD-GEN", "BCE-GEN", "BCM"],
+    "GEN": ["GEN", "OPEN", "UR", "OC", "OC Open", "OC Serv", "OPEN-GEN", "OPEN-FEM", "OP", "Open"],
+    "OBC/BC": ["OBC", "BC", "BC Open", "BC Serv", "BC Service", "BCA-GEN", "BCB-GEN", "BCC-GEN", "BCD-GEN", "BCE-GEN", "BCM"],
     "SC": ["SC", "SC Open", "SC Serv", "SC Service", "SC-OP", "SC-PH"],
     "ST": ["ST", "ST Open", "ST Serv", "ST Service", "ST-OP", "ST-PH"],
     "EWS": ["EWS", "EWS Open", "EWS Service", "EWS-PH"],
@@ -107,8 +108,8 @@ const CATEGORY_MAPPING = {
     "MANAGEMENT/NRI": ["CAT B1", "CAT B2", "CAT C(NRI)", "CA NRI", "MNG", "MQ", "MQ1", "MQ2", "MQ3", "NQ-NRI", "NRI"]
   },
   "telanganas": {
-    "GEN": ["OC", "OC Open", "OC Serv", "OPEN", "OPEN-GEN", "OPEN-FEM", "OP", "Open"],
-    "OBC/BC": ["BC", "BC Open", "BC Serv", "BC Service", "BCA-GEN", "BCB-GEN", "BCC-GEN", "BCD-GEN", "BCE-GEN", "BCM"],
+    "GEN": ["GEN", "OPEN", "UR", "OC", "OC Open", "OC Serv", "OPEN-GEN", "OPEN-FEM", "OP", "Open"],
+    "OBC/BC": ["OBC", "BC", "BC Open", "BC Serv", "BC Service", "BCA-GEN", "BCB-GEN", "BCC-GEN", "BCD-GEN", "BCE-GEN", "BCM"],
     "SC": ["SC", "SC Open", "SC Serv", "SC Service", "SC-OP", "SC-PH"],
     "ST": ["ST", "ST Open", "ST Serv", "ST Service", "ST-OP", "ST-PH"],
     "EWS": ["EWS", "EWS Open", "EWS Service", "EWS-PH"],
@@ -116,14 +117,15 @@ const CATEGORY_MAPPING = {
     "MANAGEMENT/NRI": ["CAT B1", "CAT B2", "CAT C(NRI)", "CA NRI", "MNG", "MQ", "MQ1", "MQ2", "MQ3", "NQ-NRI", "NRI"]
   },
   "tamil_nadus": {
-    "GEN": ["OC", "BC", "BCM", "MBC", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR", "OC", "BC", "BCM", "MBC"],
     "SC": ["SC", "SCA"],
     "ST": ["ST"],
+    "EWS": ["EWS"],
     "MINORITY": ["Christian Minority", "Malayalam Minority", "Telugu Minority", "Minority"],
-    "MANAGEMENT/NRI": ["Management", "MGT", "NRI", "NRI Lapsed"]
+    "MANAGEMENT/NRI": ["NRI", "Management", "MGT", "NRI Lapsed"]
   },
   "maharashtras": {
-    "GEN": ["OPEN", "UR", "UR Open"],
+    "GEN": ["GEN", "OPEN", "UR", "UR Open"],
     "OBC/SEBC": ["OBC", "SEBC", "NT1", "NT2", "NT3", "VJ", "VJA"],
     "SC": ["SC"],
     "ST": ["ST"],
@@ -131,166 +133,166 @@ const CATEGORY_MAPPING = {
     "SPECIAL": ["DEF1", "DEF2", "DEF3", "PH", "CAP"]
   },
   "gujarats": {
-    "GEN": ["OPEN", "OP", "GQ-OP", "IQ-OP", "UQ-OP"],
-    "SC": ["GQ-SC", "IQ-SC", "UQ-SC"],
-    "ST": ["GQ-ST", "IQ-ST", "UQ-ST"],
-    "EWS": ["GQ-EW", "IQ-EW", "UQ-EW"],
-    "SEBC/OBC": ["GQ-SE", "IQ-SE", "UQ-SE", "SE", "SEBC"]
+    "GEN": ["GEN", "OPEN", "UR", "OP", "GQ-OP", "IQ-OP", "UQ-OP"],
+    "SC": ["SC", "GQ-SC", "IQ-SC", "UQ-SC"],
+    "ST": ["ST", "GQ-ST", "IQ-ST", "UQ-ST"],
+    "EWS": ["EWS", "GQ-EW", "IQ-EW", "UQ-EW"],
+    "SEBC/OBC": ["OBC", "GQ-SE", "IQ-SE", "UQ-SE", "SE", "SEBC"]
   },
   "kerlas": {
-    "GEN": ["SM", "GEN", "OPEN"],
-    "OBC": ["EZ", "MU", "LC", "BH", "BX", "OEC", "OBC", "SEBC"],
+    "GEN": ["GEN", "OPEN", "UR", "SM"],
+    "OBC": ["OBC", "EZ", "MU", "LC", "BH", "BX", "OEC", "SEBC"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "west_bengals": {
-    "GEN": ["UR", "GEN", "OPEN"],
-    "OBC": ["OBC-A", "OBC-B", "OBC"],
+    "GEN": ["GEN", "OPEN", "UR"],
+    "OBC": ["OBC", "OBC-A", "OBC-B"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "uttar_pradeshes": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "OBC": ["OBC", "OBC-NCL"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "madhya_pradeshes": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "OBC": ["OBC", "OBC-NCL"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "bihars": {
-    "GEN": ["GEN", "UR", "OPEN"],
-    "OBC": ["BC", "EBC", "OBC"],
+    "GEN": ["GEN", "OPEN", "UR"],
+    "OBC": ["OBC", "BC", "EBC"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "rajasthans": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "OBC": ["OBC", "SBC", "MBC"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "delhis": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "OBC": ["OBC", "OBC-NCL"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "odishas": {
-    "GEN": ["UR", "GEN", "OPEN"],
-    "OBC": ["SEBC", "OBC"],
+    "GEN": ["GEN", "OPEN", "UR"],
+    "OBC": ["OBC", "SEBC"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "haryanas": {
-    "GEN": ["GEN", "UR", "OPEN"],
-    "OBC": ["BC-A", "BC-B", "OBC"],
+    "GEN": ["GEN", "OPEN", "UR"],
+    "OBC": ["OBC", "BC-A", "BC-B"],
     "SC": ["SC"],
     "EWS": ["EWS"]
   },
   "punjabs": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "SC": ["SC", "SC (1st Priority)", "SC (2nd Priority)"],
     "BC": ["BC"],
     "EWS": ["EWS"]
   },
   "himachal_pradeshes": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "OBC": ["OBC"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "jammu_and_kashmirs": {
-    "GEN": ["OM", "GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR", "OM"],
     "OBC": ["OBC", "ALC/IB", "RBA"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "uttarakhands": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "OBC": ["OBC", "OBC-NCL"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "jharkhands": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "OBC": ["OBC", "BC1", "BC2"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "chhattisgarhs": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "OBC": ["OBC"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "assams": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "OBC": ["OBC", "MOBC"],
     "SC": ["SC"],
     "ST": ["ST", "STP", "STH"],
     "EWS": ["EWS"]
   },
   "manipurs": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "OBC": ["OBC"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "tripuras": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "OBC": ["OBC"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "sikkims": {
-    "GEN": ["GEN", "UR", "OPEN", "SL"],
+    "GEN": ["GEN", "OPEN", "UR", "SL"],
     "OBC": ["OBC"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "pondicherries": {
-    "GEN": ["GEN", "OC", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR", "OC"],
     "OBC": ["OBC", "BC"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "arunachal_pradeshes": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "OBC": ["OBC"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "goas": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "OBC": ["OBC"],
     "SC": ["SC"],
     "ST": ["ST"],
     "EWS": ["EWS"]
   },
   "chandigarhs": {
-    "GEN": ["GEN", "UR", "OPEN"],
+    "GEN": ["GEN", "OPEN", "UR"],
     "OBC": ["OBC"],
     "SC": ["SC"],
     "ST": ["ST"],
@@ -406,7 +408,7 @@ export default function CollegePredictor() {
         body: JSON.stringify({
           rank: Number(rank),
           courseType: courseType,
-          type: typeFilter !== 'All' ? typeFilter : undefined,
+          instType: typeFilter !== 'All' ? typeFilter : undefined,
           state: (counsellingType === 'State' && stateFilter !== 'All') ? stateFilter : undefined,
           counsellingType: counsellingType !== 'All' ? counsellingType : undefined,
           category: category,
