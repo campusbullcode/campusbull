@@ -136,6 +136,165 @@ const CATEGORY_MAPPING = {
     "ST": ["GQ-ST", "IQ-ST", "UQ-ST"],
     "EWS": ["GQ-EW", "IQ-EW", "UQ-EW"],
     "SEBC/OBC": ["GQ-SE", "IQ-SE", "UQ-SE", "SE", "SEBC"]
+  },
+  "kerlas": {
+    "GEN": ["SM", "GEN", "OPEN"],
+    "OBC": ["EZ", "MU", "LC", "BH", "BX", "OEC", "OBC", "SEBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "west_bengals": {
+    "GEN": ["UR", "GEN", "OPEN"],
+    "OBC": ["OBC-A", "OBC-B", "OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "uttar_pradeshes": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "OBC-NCL"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "madhya_pradeshes": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "OBC-NCL"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "bihars": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["BC", "EBC", "OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "rajasthans": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "SBC", "MBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "delhis": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "OBC-NCL"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "odishas": {
+    "GEN": ["UR", "GEN", "OPEN"],
+    "OBC": ["SEBC", "OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "haryanas": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["BC-A", "BC-B", "OBC"],
+    "SC": ["SC"],
+    "EWS": ["EWS"]
+  },
+  "punjabs": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "SC": ["SC", "SC (1st Priority)", "SC (2nd Priority)"],
+    "BC": ["BC"],
+    "EWS": ["EWS"]
+  },
+  "himachal_pradeshes": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "jammu_and_kashmirs": {
+    "GEN": ["OM", "GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "ALC/IB", "RBA"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "uttarakhands": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "OBC-NCL"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "jharkhands": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "BC1", "BC2"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "chhattisgarhs": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "assams": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "MOBC"],
+    "SC": ["SC"],
+    "ST": ["ST", "STP", "STH"],
+    "EWS": ["EWS"]
+  },
+  "manipurs": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "tripuras": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "sikkims": {
+    "GEN": ["GEN", "UR", "OPEN", "SL"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "pondicherries": {
+    "GEN": ["GEN", "OC", "OPEN"],
+    "OBC": ["OBC", "BC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "arunachal_pradeshes": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "goas": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "chandigarhs": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
   }
 };
 

@@ -52,6 +52,244 @@ const RANK_BRACKETS = [
 // College eligibility brackets
 import { prisma } from '../utils/db.js'
 
+// Category group label → actual DB values per state table
+const CATEGORY_MAPPING = {
+  "Central": {
+    "GEN": ["GEN", "OPEN", "UR"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"],
+    "PwD": ["GEN0PwD", "OBC0PwD", "SC0PwD", "ST0PwD", "EWS0PwD"],
+    "AFMS": ["AFMS0Priority III", "AFMS0Priority IV"]
+  },
+  "open_states": {
+    "GEN": ["GEN", "OPEN", "UR"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"],
+    "PwD": ["GEN0PwD", "OBC0PwD", "SC0PwD", "ST0PwD", "EWS0PwD"]
+  },
+  "karnatakas": {
+    "GEN": ["GM", "GMH", "GMK", "GMKH", "GMR", "GMRH", "OPEN", "OPEN-GEN", "OPEN-FEM", "OPN"],
+    "OBC": ["1G", "1H", "1K", "1KH", "1R", "1RH", "2AG", "2AH", "2AK", "2AKH", "2AR", "2ARH", "2BG", "2BH", "2BK", "2BKH", "2BR", "2BRH", "3AG", "3AH", "3AK", "3AKH", "3AR", "3ARH", "3BG", "3BH", "3BK", "3BKH", "3BR", "3BRH"],
+    "SC": ["SCG", "SCH", "SCK", "SCKH", "SCR", "SCRH"],
+    "ST": ["STG", "STH", "STK", "STKH", "STR", "STRH"],
+    "MANAGEMENT/NRI": ["GMP", "GMPH", "NRI"]
+  },
+  "andhra_pradeshes": {
+    "GEN": ["OC", "OC Open", "OC Serv", "OPEN", "OPEN-GEN", "OPEN-FEM", "OP", "Open"],
+    "OBC/BC": ["BC", "BC Open", "BC Serv", "BC Service", "BCA-GEN", "BCB-GEN", "BCC-GEN", "BCD-GEN", "BCE-GEN", "BCM"],
+    "SC": ["SC", "SC Open", "SC Serv", "SC Service", "SC-OP", "SC-PH"],
+    "ST": ["ST", "ST Open", "ST Serv", "ST Service", "ST-OP", "ST-PH"],
+    "EWS": ["EWS", "EWS Open", "EWS Service", "EWS-PH"],
+    "MINORITY": ["Christian Minority", "Malayalam Minority", "Telugu Minority", "BCM"],
+    "MANAGEMENT/NRI": ["CAT B1", "CAT B2", "CAT C(NRI)", "CA NRI", "MNG", "MQ", "MQ1", "MQ2", "MQ3", "NQ-NRI", "NRI"]
+  },
+  "telanganas": {
+    "GEN": ["OC", "OC Open", "OC Serv", "OPEN", "OPEN-GEN", "OPEN-FEM", "OP", "Open"],
+    "OBC/BC": ["BC", "BC Open", "BC Serv", "BC Service", "BCA-GEN", "BCB-GEN", "BCC-GEN", "BCD-GEN", "BCE-GEN", "BCM"],
+    "SC": ["SC", "SC Open", "SC Serv", "SC Service", "SC-OP", "SC-PH"],
+    "ST": ["ST", "ST Open", "ST Serv", "ST Service", "ST-OP", "ST-PH"],
+    "EWS": ["EWS", "EWS Open", "EWS Service", "EWS-PH"],
+    "MINORITY": ["Christian Minority", "Malayalam Minority", "Telugu Minority", "BCM"],
+    "MANAGEMENT/NRI": ["CAT B1", "CAT B2", "CAT C(NRI)", "CA NRI", "MNG", "MQ", "MQ1", "MQ2", "MQ3", "NQ-NRI", "NRI"]
+  },
+  "tamil_nadus": {
+    "GEN": ["OC", "BC", "BCM", "MBC", "OPEN"],
+    "SC": ["SC", "SCA"],
+    "ST": ["ST"],
+    "MINORITY": ["Christian Minority", "Malayalam Minority", "Telugu Minority", "Minority"],
+    "MANAGEMENT/NRI": ["Management", "MGT", "NRI", "NRI Lapsed"]
+  },
+  "maharashtras": {
+    "GEN": ["OPEN", "UR", "UR Open"],
+    "OBC/SEBC": ["OBC", "SEBC", "NT1", "NT2", "NT3", "VJ", "VJA"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"],
+    "SPECIAL": ["DEF1", "DEF2", "DEF3", "PH", "CAP"]
+  },
+  "gujarats": {
+    "GEN": ["OPEN", "OP", "GQ-OP", "IQ-OP", "UQ-OP"],
+    "SC": ["GQ-SC", "IQ-SC", "UQ-SC"],
+    "ST": ["GQ-ST", "IQ-ST", "UQ-ST"],
+    "EWS": ["GQ-EW", "IQ-EW", "UQ-EW"],
+    "SEBC/OBC": ["GQ-SE", "IQ-SE", "UQ-SE", "SE", "SEBC"]
+  },
+  "kerlas": {
+    "GEN": ["SM", "GEN", "OPEN"],
+    "OBC": ["EZ", "MU", "LC", "BH", "BX", "OEC", "OBC", "SEBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "west_bengals": {
+    "GEN": ["UR", "GEN", "OPEN"],
+    "OBC": ["OBC-A", "OBC-B", "OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "uttar_pradeshes": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "OBC-NCL"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "madhya_pradeshes": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "OBC-NCL"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "bihars": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["BC", "EBC", "OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "rajasthans": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "SBC", "MBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "delhis": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "OBC-NCL"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "odishas": {
+    "GEN": ["UR", "GEN", "OPEN"],
+    "OBC": ["SEBC", "OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "haryanas": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["BC-A", "BC-B", "OBC"],
+    "SC": ["SC"],
+    "EWS": ["EWS"]
+  },
+  "punjabs": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "SC": ["SC", "SC (1st Priority)", "SC (2nd Priority)"],
+    "BC": ["BC"],
+    "EWS": ["EWS"]
+  },
+  "himachal_pradeshes": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "jammu_and_kashmirs": {
+    "GEN": ["OM", "GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "ALC/IB", "RBA"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "uttarakhands": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "OBC-NCL"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "jharkhands": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "BC1", "BC2"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "chhattisgarhs": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "assams": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC", "MOBC"],
+    "SC": ["SC"],
+    "ST": ["ST", "STP", "STH"],
+    "EWS": ["EWS"]
+  },
+  "manipurs": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "tripuras": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "sikkims": {
+    "GEN": ["GEN", "UR", "OPEN", "SL"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "pondicherries": {
+    "GEN": ["GEN", "OC", "OPEN"],
+    "OBC": ["OBC", "BC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "arunachal_pradeshes": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "goas": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  },
+  "chandigarhs": {
+    "GEN": ["GEN", "UR", "OPEN"],
+    "OBC": ["OBC"],
+    "SC": ["SC"],
+    "ST": ["ST"],
+    "EWS": ["EWS"]
+  }
+}
+
+// Expand a category group label (e.g., "GEN") to the actual DB values for that state.
+// Returns an array if expansion found, null if category is already a specific DB value.
+function expandCategory(category, tableKey) {
+  if (!category || category === 'All') return null
+  const stateCats = CATEGORY_MAPPING[tableKey]
+  if (stateCats && stateCats[category]) return stateCats[category]
+  const centralCats = CATEGORY_MAPPING["Central"]
+  if (centralCats && centralCats[category]) return centralCats[category]
+  return null
+}
+
 // POST /api/predict/rank — predict rank and matching colleges (auth + usage-limited)
 router.post('/rank', verifyToken, async (req, res) => {
   try {
@@ -227,16 +465,17 @@ router.post('/college', verifyToken, async (req, res) => {
     let params = []
     let pIdx = 1
 
-    // Category filter
+    // Category filter — expand group labels (e.g. "GEN" → ["GM","GMH",...] for Karnataka)
     if (category && category !== 'All') {
-      const cats = category.split(',').map(c => c.trim())
+      const expanded = expandCategory(category, tableName)
+      const cats = expanded || category.split(',').map(c => c.trim())
       if (cats.length > 1) {
         const placeholders = cats.map(() => `$${pIdx++}`).join(', ')
         whereClauses.push(`"${catCol}" IN (${placeholders})`)
         params.push(...cats)
       } else {
         whereClauses.push(`"${catCol}" ILIKE $${pIdx++}`)
-        params.push(`%${category}%`)
+        params.push(`%${cats[0]}%`)
       }
     }
 
