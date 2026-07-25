@@ -1,6 +1,5 @@
 import express from "express";
 import nodemailer from "nodemailer";
-import dns from "node:dns/promises";
 import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -8,51 +7,27 @@ const SENDER_EMAIL = process.env.GMAIL_USER || "mansoor.291@gmail.com";
 const SMTP_USER = "mansoor.291@gmail.com";
 const SMTP_PASS = "adbfslyzphqegnwe";
 
-function createTransport(host, port, secure) {
-  const isIpAddress = /^\d+\.\d+\.\d+\.\d+$/.test(host);
-
+function createTransport() {
   return nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    requireTLS: !secure,
-    family: isIpAddress ? undefined : 4,
-    connectionTimeout: 12000,
-    greetingTimeout: 12000,
-    socketTimeout: 20000,
-    tls: { servername: "smtp.gmail.com" },
+    service: "gmail",
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
   });
 }
 
-async function sendMailWithFallback(mail) {
+async function sendMail(mail) {
   if (!SMTP_USER || !SMTP_PASS) {
     const err = new Error("Payment confirmation email is not configured");
     err.status = 503;
     throw err;
   }
 
-  const resolvedIps = await dns.resolve4("smtp.gmail.com").catch(() => []);
-  const hosts = [...new Set(["smtp.gmail.com", ...resolvedIps.slice(0, 3)])];
-  const attempts = hosts.flatMap(host => [
-    { host, port: 587, secure: false },
-    { host, port: 465, secure: true },
-  ]);
-
-  const errors = [];
-  for (const attempt of attempts) {
-    const transporter = createTransport(attempt.host, attempt.port, attempt.secure);
-    try {
-      const info = await transporter.sendMail(mail);
-      transporter.close();
-      return info;
-    } catch (err) {
-      transporter.close();
-      errors.push(`${attempt.host}:${attempt.port} ${err?.code || ""} ${err?.response || err?.message || "failed"}`.trim());
-    }
-  }
-
-  throw new Error(`All Gmail SMTP attempts failed: ${errors.join(" | ")}`);
+  const transporter = createTransport();
+  const info = await transporter.sendMail(mail);
+  transporter.close();
+  return info;
 }
 
 function clean(value) {
@@ -100,11 +75,9 @@ router.post("/confirmation", verifyToken, async (req, res) => {
     const notes = clean(req.body.notes);
 
     if (!name || !email || !phone || !service || !utr) {
-      return res
-        .status(400)
-        .json({
-          error: "Name, email, phone, service and UTR number are required",
-        });
+      return res.status(400).json({
+        error: "Name, email, phone, service and UTR number are required",
+      });
     }
 
     if (utr.length < 6 || utr.length > 40) {
@@ -168,13 +141,19 @@ router.post("/confirmation", verifyToken, async (req, res) => {
       `,
     };
 
-    await sendMailWithFallback(studentMail);
+    await sendMail(studentMail);
 
     res.json({ message: "Payment confirmation sent successfully" });
   } catch (err) {
     console.error("payment confirmation", err);
-    const detail = err?.response || err?.message || "Unknown mail error";
-    res.status(err.status || 500).json({ error: `Failed to send payment confirmation: ${detail}` });
+    const isTimeout =
+      err?.code === "ETIMEDOUT" || /timeout/i.test(err?.message || "");
+    const detail = isTimeout
+      ? "Email service timed out. Please try again in a moment."
+      : err?.response || err?.message || "Unknown mail error";
+    res
+      .status(err.status || 500)
+      .json({ error: `Failed to send payment confirmation: ${detail}` });
   }
 });
 
