@@ -1,6 +1,12 @@
 import 'dotenv/config'
+import dns from 'node:dns'
 import express from 'express'
 import cors from 'cors'
+
+// Node >= 17 returns DNS results in verbatim order, so hosts with AAAA records
+// (smtp.gmail.com, Google APIs) resolve to IPv6 first. Render has no IPv6
+// egress route, which surfaces as ENETUNREACH on an outbound connect.
+dns.setDefaultResultOrder('ipv4first')
 
 import authRoutes from './routes/auth.js'
 import adminRoutes from './routes/admin.js'

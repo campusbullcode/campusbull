@@ -151,13 +151,28 @@ router.post("/confirmation", verifyToken, async (req, res) => {
     res.json({ message: "Payment confirmation sent successfully" });
   } catch (err) {
     console.error("payment confirmation", err);
-    const isTimeout =
-      err?.code === "ETIMEDOUT" || /timeout/i.test(err?.message || "");
-    const detail = isTimeout
-      ? "Email service timed out. Please try again in a moment."
+
+    // Never leak raw socket/DNS errors (which include internal IPs) to the client.
+    const NETWORK_CODES = new Set([
+      "ETIMEDOUT",
+      "ENETUNREACH",
+      "EHOSTUNREACH",
+      "ECONNREFUSED",
+      "ECONNRESET",
+      "EAI_AGAIN",
+      "ENOTFOUND",
+      "ESOCKET",
+      "ECONNECTION",
+    ]);
+
+    const isNetwork =
+      NETWORK_CODES.has(err?.code) || /timeout/i.test(err?.message || "");
+    const detail = isNetwork
+      ? "Could not reach the email service. Please try again in a moment."
       : err?.response || err?.message || "Unknown mail error";
+
     res
-      .status(err.status || 500)
+      .status(err.status || (isNetwork ? 503 : 500))
       .json({ error: `Failed to send payment confirmation: ${detail}` });
   }
 });
