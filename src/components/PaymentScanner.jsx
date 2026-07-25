@@ -78,10 +78,13 @@ export default function PaymentScanner({
     setSubmitting(true)
     setStatus(null)
     setMailtoUrl('')
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 20000)
     try {
       await apiFetch('/payments/confirmation', {
         method: 'POST',
         body: JSON.stringify(form),
+        signal: controller.signal,
       })
       setStatus({ type: 'success', text: 'Payment confirmation sent. We have emailed your acknowledgement and will upgrade access after verification.' })
       setForm(prev => ({ ...prev, utr: '', notes: '' }))
@@ -90,11 +93,14 @@ export default function PaymentScanner({
       setMailtoUrl(fallbackUrl)
       setStatus({
         type: 'error',
-        text: err.status === 503
+        text: err.name === 'AbortError'
+          ? 'Email is taking too long. Please use the button below to email the details directly.'
+          : err.status === 503
           ? 'Email is not configured on the server. Use the button below to send the confirmation email from your mail app.'
           : err.message || 'Failed to send payment confirmation. You can still email the details using the button below.',
       })
     } finally {
+      clearTimeout(timeoutId)
       setSubmitting(false)
     }
   }

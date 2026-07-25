@@ -3,16 +3,28 @@ import nodemailer from "nodemailer";
 import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();
+const SENDER_EMAIL = process.env.GMAIL_USER || "mansoor.291@gmail.com";
+let cachedTransporter;
 
 function getTransporter() {
   const user = "mansoor.291@gmail.com";
   const pass = "adbfslyzphqegnwe";
   if (!user || !pass) return null;
 
-  return nodemailer.createTransport({
+  if (cachedTransporter) return cachedTransporter;
+
+  cachedTransporter = nodemailer.createTransport({
     service: "gmail",
+    pool: true,
+    maxConnections: 2,
+    maxMessages: 100,
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
     auth: { user, pass },
   });
+
+  return cachedTransporter;
 }
 
 function clean(value) {
@@ -80,11 +92,11 @@ router.post("/confirmation", verifyToken, async (req, res) => {
         .json({ error: "Enter a valid UTR / Transaction ID" });
     }
 
-    const to = process.env.PAYMENT_CONFIRMATION_TO || process.env.GMAIL_USER;
     const submittedAt = new Date().toLocaleString("en-IN", {
       timeZone: "Asia/Kolkata",
     });
-    const rows = [
+
+    const studentRows = [
       ["Name", name],
       ["Email", email],
       ["Phone", phone],
@@ -92,36 +104,13 @@ router.post("/confirmation", verifyToken, async (req, res) => {
       ["Amount", amount || "Not provided"],
       ["UTR / Transaction ID", utr],
       ["Notes", notes || "None"],
-      ["User ID", req.user.userId],
       ["Submitted At", submittedAt],
     ];
 
-    await transporter.sendMail({
-      from: `"Campus Bull Payments" <${process.env.GMAIL_USER}>`,
-      to,
-      replyTo: email,
-      subject: `Payment confirmation: ${service} - ${utr}`,
-      text: plainRows(rows),
-      html: `
-        <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">
-          <h2>Payment confirmation submitted</h2>
-          ${detailsTable(rows)}
-        </div>
-      `,
-    });
-
-    const studentRows = [
-      ["Name", name],
-      ["Service", service],
-      ["Amount", amount || "Not provided"],
-      ["UTR / Transaction ID", utr],
-      ["Submitted At", submittedAt],
-    ];
-
-    await transporter.sendMail({
-      from: `"Campus Bull" <${process.env.GMAIL_USER}>`,
+    const studentMail = {
+      from: `"Campus Bull" <${SENDER_EMAIL}>`,
       to: email,
-      replyTo: to,
+      replyTo: SENDER_EMAIL,
       subject: `We received your payment details - ${service}`,
       text: [
         `Dear ${name},`,
@@ -156,7 +145,9 @@ router.post("/confirmation", verifyToken, async (req, res) => {
           </p>
         </div>
       `,
-    });
+    };
+
+    await transporter.sendMail(studentMail);
 
     res.json({ message: "Payment confirmation sent successfully" });
   } catch (err) {

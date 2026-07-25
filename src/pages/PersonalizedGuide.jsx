@@ -111,48 +111,52 @@ export default function PersonalizedGuide() {
         </div>
       </div>
 
-      {/* Plans side by side */}
-      <div className="pg-plans animate-in">
-        {PLANS.map(plan => (
-          <div key={plan.key} className={`pg-plan card ${plan.key === 'elite' ? 'pg-plan-elite' : ''}`} style={{ '--accent': plan.accent }}>
-            <div className="pg-plan-head">
-              <span className="pg-plan-badge">{plan.badge}</span>
-              <h3 className="pg-plan-name">{plan.name}</h3>
-              <div className="pg-plan-price">
-                {plan.price} <span className="pg-plan-gst">{plan.gst}</span>
+      <div className="pg-purchase-layout">
+        <div className="pg-plans-wrap">
+          {/* Plans side by side */}
+          <div className="pg-plans animate-in">
+            {PLANS.map(plan => (
+              <div key={plan.key} className={`pg-plan card ${plan.key === 'elite' ? 'pg-plan-elite' : ''}`} style={{ '--accent': plan.accent }}>
+                <div className="pg-plan-head">
+                  <span className="pg-plan-badge">{plan.badge}</span>
+                  <h3 className="pg-plan-name">{plan.name}</h3>
+                  <div className="pg-plan-price">
+                    {plan.price} <span className="pg-plan-gst">{plan.gst}</span>
+                  </div>
+                  <p className="pg-plan-tagline">{plan.tagline}</p>
+                </div>
+
+                <ul className="pg-highlights">
+                  {plan.highlights.map((h, i) => (
+                    <li key={i}>
+                      <span className="material-icons">check_circle</span>
+                      <span>{h}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="pg-plan-actions">
+                  <button className="btn-primary" onClick={() => openWhatsApp(plan.key)}>
+                    <WhatsAppIcon />
+                    Get {plan.key === 'pro' ? 'Pro' : 'Elite'}
+                  </button>
+                  <button className="btn-secondary" onClick={() => setDetailPlan(plan)}>
+                    See full details
+                  </button>
+                </div>
               </div>
-              <p className="pg-plan-tagline">{plan.tagline}</p>
-            </div>
-
-            <ul className="pg-highlights">
-              {plan.highlights.map((h, i) => (
-                <li key={i}>
-                  <span className="material-icons">check_circle</span>
-                  <span>{h}</span>
-                </li>
-              ))}
-            </ul>
-
-            <div className="pg-plan-actions">
-              <button className="btn-primary" onClick={() => openWhatsApp(plan.key)}>
-                <WhatsAppIcon />
-                Get {plan.key === 'pro' ? 'Pro' : 'Elite'}
-              </button>
-              <button className="btn-secondary" onClick={() => setDetailPlan(plan)}>
-                See full details
-              </button>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div className="pg-payment-section animate-in">
-        <PaymentScanner service="Premium Plan" note="Campus Bull premium plan payment" />
-      </div>
+          <p className="pg-foot-note">
+            Prices are exclusive of GST. After payment, share the screenshot with our team on WhatsApp to confirm enrollment and next steps.
+          </p>
+        </div>
 
-      <p className="pg-foot-note">
-        Prices are exclusive of GST. After payment, share the screenshot with our team on WhatsApp to confirm enrollment and next steps.
-      </p>
+        <aside className="pg-payment-section animate-in">
+          <PaymentScanner service="Premium Plan" note="Campus Bull premium plan payment" />
+        </aside>
+      </div>
 
       {/* Full details modal */}
       {detailPlan && (

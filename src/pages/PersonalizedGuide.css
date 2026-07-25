@@ -13,10 +13,23 @@
 .pg-locked-sub { font-size: 0.85rem; color: var(--on-surface-variant); margin-top: 0.15rem; }
 
 /* Plans grid */
+.pg-purchase-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.pg-plans-wrap {
+  min-width: 0;
+}
+
 .pg-plans {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
+  max-width: 980px;
+  margin: 0 auto;
 }
 .pg-plan {
   display: flex;
@@ -81,8 +94,10 @@
 }
 
 .pg-payment-section {
-  max-width: 420px;
-  margin: 1.5rem auto 0;
+  position: sticky;
+  top: 1.25rem;
+  align-self: start;
+  min-width: 0;
 }
 
 /* Details modal */
@@ -139,6 +154,17 @@
 .pg-modal-foot .btn-primary { width: 100%; justify-content: center; }
 
 @media (max-width: 768px) {
+  .pg-purchase-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pg-payment-section {
+    position: static;
+    max-width: 420px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
   .pg-plans { grid-template-columns: 1fr; }
 
   .pg-plan { padding: 1.25rem; }
