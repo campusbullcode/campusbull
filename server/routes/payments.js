@@ -1,23 +1,26 @@
 import express from "express";
 import nodemailer from "nodemailer";
+import dns from "node:dns/promises";
 import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();
 const SENDER_EMAIL = process.env.GMAIL_USER || "mansoor.291@gmail.com";
 let cachedTransporter;
 
-function getTransporter() {
+async function getTransporter() {
   const user = "mansoor.291@gmail.com";
   const pass = "adbfslyzphqegnwe";
   if (!user || !pass) return null;
 
   if (cachedTransporter) return cachedTransporter;
 
+  const [gmailIpv4] = await dns.resolve4("smtp.gmail.com");
+  if (!gmailIpv4) throw new Error("Could not resolve smtp.gmail.com IPv4 address");
+
   cachedTransporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
+    host: gmailIpv4,
     port: 465,
     secure: true,
-    family: 4,
     connectionTimeout: 30000,
     greetingTimeout: 30000,
     socketTimeout: 45000,
@@ -66,7 +69,7 @@ function detailsTable(rows) {
 
 router.post("/confirmation", verifyToken, async (req, res) => {
   try {
-    const transporter = getTransporter();
+    const transporter = await getTransporter();
     if (!transporter) {
       return res
         .status(503)
