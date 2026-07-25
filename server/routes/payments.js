@@ -1,4 +1,6 @@
 import express from "express";
+import dns from "node:dns/promises";
+import net from "node:net";
 import nodemailer from "nodemailer";
 import { verifyToken } from "../middleware/auth.js";
 
@@ -6,18 +8,47 @@ const router = express.Router();
 const SENDER_EMAIL = process.env.GMAIL_USER || "mansoor.291@gmail.com";
 const SMTP_USER = "mansoor.291@gmail.com";
 const SMTP_PASS = "adbfslyzphqegnwe";
+const SMTP_HOST = "smtp.gmail.com";
+const SMTP_PORTS = [465, 587];
+const ATTEMPT_TIMEOUT = 15000;
 
-function createTransport() {
+const NETWORK_CODES = new Set([
+  "ETIMEDOUT",
+  "ENETUNREACH",
+  "EHOSTUNREACH",
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "EAI_AGAIN",
+  "ENOTFOUND",
+  "ESOCKET",
+  "ECONNECTION",
+  "EDNS",
+]);
+
+function isNetworkError(err) {
+  return NETWORK_CODES.has(err?.code) || /timeout/i.test(err?.message || "");
+}
+
+// nodemailer 9 resolves BOTH the A and AAAA records for a hostname and then
+// picks one at random (lib/shared/index.js -> formatDNSValue), so neither
+// `family: 4` nor dns.setDefaultResultOrder influences which one it dials. On a
+// host with no IPv6 egress that makes every send a coin flip between working
+// and failing with ENETUNREACH.
+//
+// Passing an already-resolved IPv4 literal makes nodemailer skip DNS entirely
+// (net.isIP short-circuit), while `servername` keeps SNI and certificate
+// validation pointed at the real smtp.gmail.com.
+function createTransport(address, port) {
   return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    // Node >= 17 returns DNS results verbatim, so smtp.gmail.com resolves to an
-    // IPv6 address first. Networks without IPv6 egress fail with ENETUNREACH.
-    family: 4,
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
+    host: address,
+    port,
+    secure: port === 465,
+    requireTLS: port !== 465,
+    servername: SMTP_HOST,
+    tls: { servername: SMTP_HOST },
+    connectionTimeout: ATTEMPT_TIMEOUT,
+    greetingTimeout: ATTEMPT_TIMEOUT,
+    socketTimeout: ATTEMPT_TIMEOUT + 5000,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
   });
 }
@@ -29,10 +60,44 @@ async function sendMail(mail) {
     throw err;
   }
 
-  const transporter = createTransport();
-  const info = await transporter.sendMail(mail);
-  transporter.close();
-  return info;
+  let addresses;
+  try {
+    addresses = await dns.resolve4(SMTP_HOST);
+  } catch (cause) {
+    const err = new Error(`Could not resolve ${SMTP_HOST} over IPv4`);
+    err.code = cause?.code || "EAI_AGAIN";
+    throw err;
+  }
+
+  if (!addresses.length) {
+    const err = new Error(`No IPv4 address for ${SMTP_HOST}`);
+    err.code = "ENOTFOUND";
+    throw err;
+  }
+
+  // 465 (implicit TLS) is the norm; 587 (STARTTLS) is the fallback for hosts
+  // that block 465 outbound. Worst case stays well inside the client's 90s abort.
+  let lastError;
+  for (const port of SMTP_PORTS) {
+    for (const address of addresses) {
+      const transporter = createTransport(address, port);
+      try {
+        return await transporter.sendMail(mail);
+      } catch (err) {
+        lastError = err;
+        // Auth failures and rejected recipients will fail identically on every
+        // address and port, so stop rather than burning the timeout budget.
+        if (!isNetworkError(err)) throw err;
+        console.warn(
+          `smtp attempt failed host=${address} port=${port} code=${err.code || "?"}`,
+        );
+      } finally {
+        transporter.close();
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 function clean(value) {
@@ -68,6 +133,38 @@ function detailsTable(rows) {
     </table>
   `;
 }
+
+// Reports what this host's network can actually reach. Exposes no secrets --
+// only DNS results and TCP reachability -- so it is safe to leave in place for
+// diagnosing SMTP failures on hosts whose logs we cannot read.
+router.get("/diag", verifyToken, async (req, res) => {
+  const probe = (host, port) =>
+    new Promise((resolve) => {
+      const socket = net.connect({ host, port, timeout: 8000 });
+      const finish = (result) => {
+        socket.destroy();
+        resolve(result);
+      };
+      socket.once("connect", () => finish("ok"));
+      socket.once("timeout", () => finish("timeout"));
+      socket.once("error", (err) => finish(err.code || err.message));
+    });
+
+  const ipv4 = await dns.resolve4(SMTP_HOST).catch((err) => err.code);
+  const ipv6 = await dns.resolve6(SMTP_HOST).catch((err) => err.code);
+
+  const reachability = {};
+  for (const port of SMTP_PORTS) {
+    if (Array.isArray(ipv4) && ipv4.length) {
+      reachability[`ipv4:${port}`] = await probe(ipv4[0], port);
+    }
+    if (Array.isArray(ipv6) && ipv6.length) {
+      reachability[`ipv6:${port}`] = await probe(ipv6[0], port);
+    }
+  }
+
+  res.json({ node: process.version, host: SMTP_HOST, ipv4, ipv6, reachability });
+});
 
 router.post("/confirmation", verifyToken, async (req, res) => {
   try {
@@ -152,28 +249,16 @@ router.post("/confirmation", verifyToken, async (req, res) => {
   } catch (err) {
     console.error("payment confirmation", err);
 
-    // Never leak raw socket/DNS errors (which include internal IPs) to the client.
-    const NETWORK_CODES = new Set([
-      "ETIMEDOUT",
-      "ENETUNREACH",
-      "EHOSTUNREACH",
-      "ECONNREFUSED",
-      "ECONNRESET",
-      "EAI_AGAIN",
-      "ENOTFOUND",
-      "ESOCKET",
-      "ECONNECTION",
-    ]);
-
-    const isNetwork =
-      NETWORK_CODES.has(err?.code) || /timeout/i.test(err?.message || "");
+    // Report the error *code* but never the raw message: socket errors embed the
+    // resolved IP, which is both noise to the user and needless disclosure.
+    const isNetwork = isNetworkError(err);
     const detail = isNetwork
-      ? "Could not reach the email service. Please try again in a moment."
+      ? `Could not reach the email service [${err?.code || "unknown"}]. Please try again in a moment.`
       : err?.response || err?.message || "Unknown mail error";
 
     res
       .status(err.status || (isNetwork ? 503 : 500))
-      .json({ error: `Failed to send payment confirmation: ${detail}` });
+      .json({ error: `Failed to send payment confirmation: ${detail}`, code: err?.code });
   }
 });
 
