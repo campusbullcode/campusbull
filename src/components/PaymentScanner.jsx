@@ -58,7 +58,7 @@ export default function PaymentScanner({
     setSubmitting(true)
     setStatus(null)
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 20000)
+    const timeoutId = setTimeout(() => controller.abort(), 50000)
     try {
       await apiFetch('/payments/confirmation', {
         method: 'POST',
