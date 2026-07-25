@@ -5,8 +5,6 @@ import './PaymentScanner.css'
 
 const DEFAULT_PAYEE = 'Mansoor Ahmed'
 const DEFAULT_UPI_ID = 'mansoor.291@okhdfcbank'
-const CONFIRMATION_EMAIL = 'mansoor.291@gmail.com'
-
 export default function PaymentScanner({
   amount,
   note = 'Campus Bull payment',
@@ -27,7 +25,6 @@ export default function PaymentScanner({
   })
   const [submitting, setSubmitting] = useState(false)
   const [status, setStatus] = useState(null)
-  const [mailtoUrl, setMailtoUrl] = useState('')
 
   const upiUri = useMemo(() => {
     const params = new URLSearchParams({
@@ -56,28 +53,10 @@ export default function PaymentScanner({
     setForm(prev => ({ ...prev, [field]: event.target.value }))
   }
 
-  const buildEmailUrl = () => {
-    const subject = `Payment confirmation: ${form.service || service} - ${form.utr || 'UTR'}`
-    const body = [
-      'Payment confirmation submitted from Campus Bull.',
-      '',
-      `Name: ${form.name}`,
-      `Email: ${form.email}`,
-      `Phone: ${form.phone}`,
-      `Service: ${form.service}`,
-      `Amount: ${form.amount || 'Not provided'}`,
-      `UTR / Transaction ID: ${form.utr}`,
-      `Notes: ${form.notes || 'None'}`,
-    ].join('\n')
-
-    return `mailto:${CONFIRMATION_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-  }
-
   const submitConfirmation = async (event) => {
     event.preventDefault()
     setSubmitting(true)
     setStatus(null)
-    setMailtoUrl('')
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 20000)
     try {
@@ -89,15 +68,11 @@ export default function PaymentScanner({
       setStatus({ type: 'success', text: 'Payment confirmation sent. We have emailed your acknowledgement and will upgrade access after verification.' })
       setForm(prev => ({ ...prev, utr: '', notes: '' }))
     } catch (err) {
-      const fallbackUrl = buildEmailUrl()
-      setMailtoUrl(fallbackUrl)
       setStatus({
         type: 'error',
         text: err.name === 'AbortError'
-          ? 'Email is taking too long. Please use the button below to email the details directly.'
-          : err.status === 503
-          ? 'Email is not configured on the server. Use the button below to send the confirmation email from your mail app.'
-          : err.message || 'Failed to send payment confirmation. You can still email the details using the button below.',
+          ? 'Email is taking too long. Please try again in a moment.'
+          : err.message || 'Failed to send payment confirmation.',
       })
     } finally {
       clearTimeout(timeoutId)
@@ -183,13 +158,6 @@ export default function PaymentScanner({
           <div className={`payment-form-status ${status.type}`}>
             {status.text}
           </div>
-        )}
-
-        {mailtoUrl && (
-          <a className="btn-secondary payment-submit" href={mailtoUrl}>
-            <span className="material-icons">mail</span>
-            Email Details to Mansoor
-          </a>
         )}
 
         <button type="submit" className="btn-primary payment-submit" disabled={submitting}>

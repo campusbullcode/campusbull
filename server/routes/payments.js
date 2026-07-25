@@ -15,9 +15,6 @@ function getTransporter() {
 
   cachedTransporter = nodemailer.createTransport({
     service: "gmail",
-    pool: true,
-    maxConnections: 2,
-    maxMessages: 100,
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 15000,
@@ -152,7 +149,8 @@ router.post("/confirmation", verifyToken, async (req, res) => {
     res.json({ message: "Payment confirmation sent successfully" });
   } catch (err) {
     console.error("payment confirmation", err);
-    res.status(500).json({ error: "Failed to send payment confirmation" });
+    const detail = err?.response || err?.message || "Unknown mail error";
+    res.status(500).json({ error: `Failed to send payment confirmation: ${detail}` });
   }
 });
 
