@@ -9,7 +9,12 @@ const SMTP_PASS = "adbfslyzphqegnwe";
 
 function createTransport() {
   return nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    // Node >= 17 returns DNS results verbatim, so smtp.gmail.com resolves to an
+    // IPv6 address first. Networks without IPv6 egress fail with ENETUNREACH.
+    family: 4,
     connectionTimeout: 30000,
     greetingTimeout: 30000,
     socketTimeout: 30000,
