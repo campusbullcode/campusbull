@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import PaymentScanner from '../components/PaymentScanner'
 import './PersonalizedGuide.css'
 
 const WhatsAppIcon = () => (
@@ -145,8 +146,12 @@ export default function PersonalizedGuide() {
         ))}
       </div>
 
+      <div className="pg-payment-section animate-in">
+        <PaymentScanner service="Premium Plan" note="Campus Bull premium plan payment" />
+      </div>
+
       <p className="pg-foot-note">
-        Prices are exclusive of GST. Our counseling team will reach out after you choose a plan to confirm enrollment and next steps.
+        Prices are exclusive of GST. After payment, share the screenshot with our team on WhatsApp to confirm enrollment and next steps.
       </p>
 
       {/* Full details modal */}

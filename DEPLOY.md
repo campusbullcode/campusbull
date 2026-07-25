@@ -25,6 +25,9 @@ Deploy the **backend first** (you need its URL for the frontend), then the front
    | `DATABASE_URL`               | `postgresql://neondb_owner:...@ep-wispy-breeze-aqhmpdnh.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require` |
    | `JWT_SECRET`                 | any long random string (keep it secret)                               |
    | `FRONTEND_URL`               | your Vercel URL — fill in after step 2 (e.g. `https://campus-bull.vercel.app`) |
+   | `GMAIL_USER`                 | Gmail account used to send payment confirmations                      |
+   | `GMAIL_APP_PASSWORD`         | Gmail app password for `GMAIL_USER`                                   |
+   | `PAYMENT_CONFIRMATION_TO`    | inbox that receives UTR/payment confirmation emails                   |
    | `NODE_ENV`                   | `production`                                                          |
 
    > `RENDER_EXTERNAL_URL` is injected by Render automatically — it powers the keep-alive self-ping so the free tier doesn't sleep.
@@ -69,6 +72,7 @@ npm run dev        # runs backend (port 5000) + vite (port 5173) together
 
 - Local frontend proxies `/api` → `localhost:5000` (see `vite.config.js`).
 - Requires `.env` with `DATABASE_URL`, `JWT_SECRET`, `PORT=5000`.
+- For payment confirmation emails, also set `GMAIL_USER`, `GMAIL_APP_PASSWORD`, and optionally `PAYMENT_CONFIRMATION_TO`.
 - Leave `VITE_API_URL` **unset** (or commented) locally so the proxy is used.
 
 ---

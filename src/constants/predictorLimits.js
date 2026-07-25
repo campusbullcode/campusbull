@@ -3,8 +3,8 @@
 // Tier (Admin / Pro / Free) comes from the existing user.role & user.isPro fields.
 // The run COUNTS ("Pro: rank x2 / college x1", "Free: rank x1 / college locked")
 // are kept in the browser (localStorage) so NO database column is needed.
-// The server independently enforces feature access by tier (College Predictor is
-// PRO/ADMIN only) as the real gate.
+// The server independently enforces feature access by tier. UG college searches
+// are free; PG college searches remain PRO/ADMIN only.
 
 export const PREDICTOR_LIMITS = {
   rank:    { ADMIN: Infinity, PRO: 4, FREE: 2 },

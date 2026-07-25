@@ -303,10 +303,6 @@ const CATEGORY_MAPPING = {
 export default function CollegePredictor() {
   const { user } = useAuth()
   const [, forceTick] = useState(0)   // re-render after a run bumps the stored count
-  const access = predictorAccess(user, 'college')
-  const lockMessage = access.tier === 'FREE'
-    ? 'College Predictor is a PRO feature. Upgrade to PRO to unlock it.'
-    : 'You have used your College Predictor access. Contact admin for more.'
   const [limitError, setLimitError] = useState(null)
 
   // Derive defaults from user profile
@@ -334,6 +330,14 @@ export default function CollegePredictor() {
   const [apiColleges,     setApiColleges]      = useState([])
   const [apiLoading,      setApiLoading]       = useState(false)
   const [sortConfig,      setSortConfig]       = useState({ key: null, direction: 'asc' })
+  const rawAccess = predictorAccess(user, 'college')
+  const isUgSearch = courseType === 'UG'
+  const access = isUgSearch
+    ? { ...rawAccess, limit: Infinity, left: Infinity, unlimited: true, locked: false }
+    : rawAccess
+  const lockMessage = access.tier === 'FREE'
+    ? 'PG College Predictor is a PRO feature. MBBS/UG searches are free.'
+    : 'You have used your College Predictor access. Contact admin for more.'
 
   // Sync profile values if user loads later
   useEffect(() => {
@@ -419,8 +423,10 @@ export default function CollegePredictor() {
         })
       })
       setApiColleges(result.colleges || [])
-      bumpUsed(user, 'college')       // count this run
-      forceTick(t => t + 1)
+      if (!isUgSearch) {
+        bumpUsed(user, 'college')       // count paid-gated PG runs only
+        forceTick(t => t + 1)
+      }
     } catch (err) {
       if (err.status === 403) {
         setLimitError(err.message)
@@ -535,7 +541,7 @@ export default function CollegePredictor() {
           <div style={{ flex: 1, minWidth: 200 }}>
             <p style={{ fontWeight: 600, marginBottom: '0.2rem' }}>{lockMessage}</p>
             <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)' }}>
-              {access.tier === 'FREE' ? 'PRO members get 1 College Predictor run.' : 'Your run has been used.'}
+              {access.tier === 'FREE' ? 'Switch to MBBS/UG for free college searches.' : 'Your run has been used.'}
             </p>
           </div>
         </div>
@@ -543,7 +549,7 @@ export default function CollegePredictor() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', marginBottom: '1.25rem', color: 'var(--on-surface-variant)' }}>
           <span className="material-icons" style={{ fontSize: '1rem', color: 'var(--primary)' }}>bolt</span>
           {access.unlimited
-            ? <span><strong>Unlimited</strong> college searches (Admin)</span>
+            ? <span><strong>{isUgSearch ? 'Free' : 'Unlimited'}</strong> {isUgSearch ? 'MBBS/UG college searches' : 'college searches (Admin)'}</span>
             : <span><strong>{access.left}</strong> of {access.limit} college search{access.limit !== 1 ? 'es' : ''} left · each search costs 1 token</span>}
         </div>
       )}

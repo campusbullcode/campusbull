@@ -9,6 +9,7 @@ import testRoutes from './routes/tests.js'
 import predictRoutes from './routes/predict.js'
 import qaRoutes from './routes/qa.js'
 import paperRoutes from './routes/papers.js'
+import paymentRoutes from './routes/payments.js'
 
 const app = express()
 
@@ -45,6 +46,7 @@ app.use('/api/tests', testRoutes)
 app.use('/api/predict', predictRoutes)
 app.use('/api/qa', qaRoutes)
 app.use('/api/papers', paperRoutes)
+app.use('/api/payments', paymentRoutes)
 
 // Public: active announcements for students
 import { prisma } from './utils/db.js'

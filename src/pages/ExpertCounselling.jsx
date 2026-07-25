@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PaymentScanner from '../components/PaymentScanner'
 import './ExpertCounselling.css'
 
 const EXPERTS = [
@@ -208,6 +209,8 @@ export default function ExpertCounselling() {
               Secure payment · Free cancellation up to 2h before
             </p>
           </div>
+
+          <PaymentScanner service="Expert Counselling" note="Campus Bull expert counselling payment" />
         </div>
       </div>
     </div>

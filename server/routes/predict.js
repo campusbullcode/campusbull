@@ -6,8 +6,9 @@ const router = express.Router()
 // ── Predictor tier access ───────────────────────────────────────────────────
 // Per-account run counts ("Pro: rank x2 / college x1", "Free: rank x1 / college locked")
 // are enforced on the client (no DB column needed). The SERVER enforces feature
-// access by tier: the College Predictor is PRO/ADMIN only; the Rank Predictor is
-// available to any logged-in user. Tier comes from existing role/isPro columns.
+// access by tier: UG/MBBS College Predictor searches are free, while PG College
+// Predictor searches are PRO/ADMIN only. The Rank Predictor is available to any
+// logged-in user. Tier comes from existing role/isPro columns.
 const tierOf = (u) => (u && u.role === 'ADMIN' ? 'ADMIN' : (u && u.isPro ? 'PRO' : 'FREE'))
 
 // Returns { ok, status?, error?, tier }. `proOnly` blocks FREE users.
@@ -20,7 +21,7 @@ async function checkAccess(userId, { proOnly = false } = {}) {
   const tier = tierOf(u)
   if (proOnly && tier === 'FREE') {
     return { ok: false, status: 403, limitReached: true, tier,
-      error: 'College Predictor is a PRO feature. Upgrade to PRO to unlock it.' }
+      error: 'PG College Predictor is a PRO feature. MBBS/UG searches are free.' }
   }
   return { ok: true, tier }
 }
@@ -454,7 +455,7 @@ router.post('/college', verifyToken, async (req, res) => {
       return res.status(400).json({ error: 'Valid rank is required' })
     }
 
-    const gate = await checkAccess(req.user.userId, { proOnly: true })
+    const gate = await checkAccess(req.user.userId, { proOnly: courseType !== 'UG' })
     if (!gate.ok) return res.status(gate.status).json(gate)
 
     const tableName = await getTableName(state, counsellingType)

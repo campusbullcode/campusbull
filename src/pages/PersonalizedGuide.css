@@ -80,6 +80,11 @@
   margin-right: auto;
 }
 
+.pg-payment-section {
+  max-width: 420px;
+  margin: 1.5rem auto 0;
+}
+
 /* Details modal */
 .pg-modal-backdrop {
   position: fixed; inset: 0;
