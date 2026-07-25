@@ -58,7 +58,7 @@ export default function PaymentScanner({
     setSubmitting(true)
     setStatus(null)
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 50000)
+    const timeoutId = setTimeout(() => controller.abort(), 90000)
     try {
       await apiFetch('/payments/confirmation', {
         method: 'POST',
@@ -71,7 +71,7 @@ export default function PaymentScanner({
       setStatus({
         type: 'error',
         text: err.name === 'AbortError'
-          ? 'Email is taking too long. Please try again in a moment.'
+          ? 'Email is taking too long. Please try again in a moment, or contact support if this repeats.'
           : err.message || 'Failed to send payment confirmation.',
       })
     } finally {

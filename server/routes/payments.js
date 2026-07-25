@@ -5,32 +5,54 @@ import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();
 const SENDER_EMAIL = process.env.GMAIL_USER || "mansoor.291@gmail.com";
-let cachedTransporter;
+const SMTP_USER = "mansoor.291@gmail.com";
+const SMTP_PASS = "adbfslyzphqegnwe";
 
-async function getTransporter() {
-  const user = "mansoor.291@gmail.com";
-  const pass = "adbfslyzphqegnwe";
-  if (!user || !pass) return null;
+function createTransport(host, port, secure) {
+  const isIpAddress = /^\d+\.\d+\.\d+\.\d+$/.test(host);
 
-  if (cachedTransporter) return cachedTransporter;
-
-  const [gmailIpv4] = await dns.resolve4("smtp.gmail.com");
-  if (!gmailIpv4) throw new Error("Could not resolve smtp.gmail.com IPv4 address");
-
-  cachedTransporter = nodemailer.createTransport({
-    host: gmailIpv4,
-    port: 465,
-    secure: true,
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 45000,
-    tls: {
-      servername: "smtp.gmail.com",
-    },
-    auth: { user, pass },
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    requireTLS: !secure,
+    family: isIpAddress ? undefined : 4,
+    connectionTimeout: 12000,
+    greetingTimeout: 12000,
+    socketTimeout: 20000,
+    tls: { servername: "smtp.gmail.com" },
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
   });
+}
 
-  return cachedTransporter;
+async function sendMailWithFallback(mail) {
+  if (!SMTP_USER || !SMTP_PASS) {
+    const err = new Error("Payment confirmation email is not configured");
+    err.status = 503;
+    throw err;
+  }
+
+  const resolvedIps = await dns.resolve4("smtp.gmail.com").catch(() => []);
+  const hosts = [...new Set(["smtp.gmail.com", ...resolvedIps.slice(0, 3)])];
+  const attempts = hosts.flatMap(host => [
+    { host, port: 587, secure: false },
+    { host, port: 465, secure: true },
+  ]);
+
+  const errors = [];
+  for (const attempt of attempts) {
+    const transporter = createTransport(attempt.host, attempt.port, attempt.secure);
+    try {
+      const info = await transporter.sendMail(mail);
+      transporter.close();
+      return info;
+    } catch (err) {
+      transporter.close();
+      errors.push(`${attempt.host}:${attempt.port} ${err?.code || ""} ${err?.response || err?.message || "failed"}`.trim());
+    }
+  }
+
+  throw new Error(`All Gmail SMTP attempts failed: ${errors.join(" | ")}`);
 }
 
 function clean(value) {
@@ -69,13 +91,6 @@ function detailsTable(rows) {
 
 router.post("/confirmation", verifyToken, async (req, res) => {
   try {
-    const transporter = await getTransporter();
-    if (!transporter) {
-      return res
-        .status(503)
-        .json({ error: "Payment confirmation email is not configured" });
-    }
-
     const name = clean(req.body.name);
     const email = clean(req.body.email);
     const phone = clean(req.body.phone);
@@ -153,13 +168,13 @@ router.post("/confirmation", verifyToken, async (req, res) => {
       `,
     };
 
-    await transporter.sendMail(studentMail);
+    await sendMailWithFallback(studentMail);
 
     res.json({ message: "Payment confirmation sent successfully" });
   } catch (err) {
     console.error("payment confirmation", err);
     const detail = err?.response || err?.message || "Unknown mail error";
-    res.status(500).json({ error: `Failed to send payment confirmation: ${detail}` });
+    res.status(err.status || 500).json({ error: `Failed to send payment confirmation: ${detail}` });
   }
 });
 
