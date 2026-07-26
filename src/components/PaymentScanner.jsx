@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { apiFetch } from '../utils/api'
+import { openWhatsApp } from '../utils/whatsapp'
+import WhatsAppIcon from './WhatsAppIcon'
 import './PaymentScanner.css'
 
 const DEFAULT_PAYEE = 'Mansoor Ahmed'
@@ -23,7 +24,6 @@ export default function PaymentScanner({
     utr: '',
     notes: '',
   })
-  const [submitting, setSubmitting] = useState(false)
   const [status, setStatus] = useState(null)
 
   const upiUri = useMemo(() => {
@@ -53,31 +53,44 @@ export default function PaymentScanner({
     setForm(prev => ({ ...prev, [field]: event.target.value }))
   }
 
-  const submitConfirmation = async (event) => {
+  const submitConfirmation = (event) => {
     event.preventDefault()
-    setSubmitting(true)
-    setStatus(null)
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 90000)
-    try {
-      await apiFetch('/payments/confirmation', {
-        method: 'POST',
-        body: JSON.stringify(form),
-        signal: controller.signal,
-      })
-      setStatus({ type: 'success', text: 'Payment confirmation sent. We have emailed your acknowledgement and will upgrade access after verification.' })
-      setForm(prev => ({ ...prev, utr: '', notes: '' }))
-    } catch (err) {
-      setStatus({
-        type: 'error',
-        text: err.name === 'AbortError'
-          ? 'Email is taking too long. Please try again in a moment, or contact support if this repeats.'
-          : err.message || 'Failed to send payment confirmation.',
-      })
-    } finally {
-      clearTimeout(timeoutId)
-      setSubmitting(false)
+
+    const utr = form.utr.trim().toUpperCase()
+    if (utr.length < 6 || utr.length > 40) {
+      setStatus({ type: 'error', text: 'Enter a valid UTR / Transaction ID.' })
+      return
     }
+
+    const details = [
+      ['Name', form.name.trim()],
+      ['Email', form.email.trim()],
+      ['Phone', form.phone.trim()],
+      ['Service', form.service.trim()],
+      ['Amount', form.amount.trim() || 'Not provided'],
+      ['UTR / Transaction ID', utr],
+      ['Notes', form.notes.trim() || 'None'],
+    ]
+
+    const message = [
+      'Hello,',
+      '',
+      `I have completed the payment for *${form.service.trim() || 'Campus Bull'}* and am sharing my details for verification.`,
+      '',
+      '*Payment Details:*',
+      ...details.map(([label, value]) => `${label}: ${value}`),
+      '',
+      'Please confirm once the payment is verified. Thank you.',
+    ].join('\n')
+
+    openWhatsApp(message)
+
+    // The form values are deliberately left in place: WhatsApp has only been
+    // opened, the user has not sent anything yet, so they may need to retry.
+    setStatus({
+      type: 'success',
+      text: 'WhatsApp is opening with your payment details. Press send there to share them with our team.',
+    })
   }
 
   return (
@@ -160,9 +173,9 @@ export default function PaymentScanner({
           </div>
         )}
 
-        <button type="submit" className="btn-primary payment-submit" disabled={submitting}>
-          <span className="material-icons">{submitting ? 'hourglass_empty' : 'send'}</span>
-          {submitting ? 'Sending...' : 'Submit Payment Confirmation'}
+        <button type="submit" className="btn-primary payment-submit">
+          <WhatsAppIcon />
+          Send Details on WhatsApp
         </button>
       </form>
     </div>

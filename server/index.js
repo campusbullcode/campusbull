@@ -1,12 +1,6 @@
 import 'dotenv/config'
-import dns from 'node:dns'
 import express from 'express'
 import cors from 'cors'
-
-// Node >= 17 returns DNS results in verbatim order, so hosts with AAAA records
-// (smtp.gmail.com, Google APIs) resolve to IPv6 first. Render has no IPv6
-// egress route, which surfaces as ENETUNREACH on an outbound connect.
-dns.setDefaultResultOrder('ipv4first')
 
 import authRoutes from './routes/auth.js'
 import adminRoutes from './routes/admin.js'
@@ -15,7 +9,6 @@ import testRoutes from './routes/tests.js'
 import predictRoutes from './routes/predict.js'
 import qaRoutes from './routes/qa.js'
 import paperRoutes from './routes/papers.js'
-import paymentRoutes from './routes/payments.js'
 
 const app = express()
 
@@ -52,7 +45,6 @@ app.use('/api/tests', testRoutes)
 app.use('/api/predict', predictRoutes)
 app.use('/api/qa', qaRoutes)
 app.use('/api/papers', paperRoutes)
-app.use('/api/payments', paymentRoutes)
 
 // Public: active announcements for students
 import { prisma } from './utils/db.js'
